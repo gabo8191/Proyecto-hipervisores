@@ -1,0 +1,3 @@
+db,host,io_insert_s,io_checkpoint_s,io_write_total_s,io_seq_scan_s,io_idx_create_s,io_idx_reads_avg,cpu_sort_avg,cpu_sort_min,cpu_sort_max,cpu_sort_stdev,cpu_agg_avg,cpu_agg_min,cpu_agg_max,cpu_agg_stdev,cpu_join_avg,cpu_join_min,cpu_join_max,cpu_join_stdev,cpu_math_avg,cpu_math_min,cpu_math_max,cpu_math_stdev,error
+Proxmox_Tipo1,192.168.137.7,5.6155,0.0,5.6155,0.0407,0.1592,0.0214,0.2279,0.2265,0.229,0.0013,0.3017,0.3008,0.303,0.0012,0.2965,0.2949,0.2991,0.0023,6.4578,6.4399,6.4762,0.0182,
+VirtualBox_Tipo2,192.168.137.6,1.4767,0.0,1.4767,0.037,0.1176,0.0198,0.1747,0.1737,0.1762,0.0013,0.2234,0.2122,0.2316,0.01,0.1954,0.1944,0.1967,0.0012,3.9814,3.9162,4.0337,0.0598,

@@ -1,0 +1,3 @@
+Target,IP,Total Requests,Concurrency,Total Time (s),RPS (Req/s),Avg Latency (s),Min Latency (s),Max Latency (s),StdDev Latency,Errors,Status Codes
+Proxmox_Tipo1,http://192.168.137.7/,2000,50,1.8167,1100.88,0.0406,0.0082,0.0813,0.0101,0,{200: 2000}
+VirtualBox_Tipo2,http://192.168.137.6/,2000,50,1.7386,1150.33,0.0388,0.0095,0.0883,0.0103,0,{200: 2000}
