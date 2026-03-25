@@ -47,6 +47,11 @@ Tunja
   - [5.7 Apache HTTP Server en entornos virtualizados](#57-apache-http-server-en-entornos-virtualizados)
   - [5.8 PostgreSQL en entornos virtualizados](#58-postgresql-en-entornos-virtualizados)
   - [5.9 Implicaciones de seguridad según el tipo de hipervisor](#59-implicaciones-de-seguridad-según-el-tipo-de-hipervisor)
+- [6. Análisis y síntesis](#6-análisis-y-síntesis)
+  - [6.1 Proxmox VE y VirtualBox como representantes de cada arquitectura](#61-proxmox-ve-y-virtualbox-como-representantes-de-cada-arquitectura)
+  - [6.2 La elección de Apache y PostgreSQL como servicios del entorno](#62-la-elección-de-apache-y-postgresql-como-servicios-del-entorno)
+  - [6.3 La definición del modo de red como decisión del equipo](#63-la-definición-del-modo-de-red-como-decisión-del-equipo)
+  - [6.4 El diseño del benchmark como solución a una limitación del entorno](#64-el-diseño-del-benchmark-como-solución-a-una-limitación-del-entorno)
 - [9. Respuesta a las preguntas iniciales](#9-respuesta-a-las-preguntas-iniciales)
   - [9.1. Nivel Conceptual](#91-nivel-conceptual)
     - [9.1.1. Diferencias fundamentales entre hipervisores de Tipo 1 y Tipo 2](#911-diferencias-fundamentales-entre-hipervisores-de-tipo-1-y-tipo-2)
@@ -73,6 +78,7 @@ Tunja
   - [9.5. Nivel Reflexivo](#95-nivel-reflexivo)
     - [9.5.1. Retos técnicos y de compatibilidad encontrados](#951-retos-técnicos-y-de-compatibilidad-encontrados)
     - [9.5.2. Lecciones aprendidas](#952-lecciones-aprendidas)
+- [10. Conclusiones](#10-conclusiones)
 - [Referencias](#referencias)
 
 ---
@@ -282,6 +288,54 @@ El tipo de hipervisor tiene implicaciones directas sobre la seguridad de la infr
 
 ---
 
+# 6. Análisis y síntesis
+
+Esta sección documenta el proceso de análisis colectivo mediante el cual el equipo, apoyándose en el marco teórico construido en la investigación, examinó las razones detrás de cada herramienta y tomó las decisiones técnicas que orientarán la ejecución del proyecto. No se trata de analizar resultados obtenidos —eso corresponde a la sección 9— sino de explicar cómo la teoría informa las decisiones de diseño e implementación que se llevarán a cabo.
+
+---
+
+## 6.1 Proxmox VE y VirtualBox como representantes de cada arquitectura
+
+El proyecto plantea desde el principio que la arquitectura debe incluir al menos un hipervisor de Tipo 1 y uno de Tipo 2. Esta exigencia no es arbitraria: la pregunta guía del nivel conceptual requiere comparar ambas arquitecturas con evidencia práctica, lo cual solo será posible si las dos están presentes y operando simultáneamente en la misma infraestructura. Sin esa dualidad, la comparación quedaría en el plano puramente teórico.
+
+Para cubrir el Tipo 1, el equipo evaluó las opciones disponibles. VMware ESXi y Citrix Hypervisor son soluciones propietarias con licenciamiento comercial que no se justifica en el contexto del proyecto. Microsoft Hyper-V exige licencias de Windows Server. Proxmox VE, en cambio, es completamente open-source bajo licencia GNU AGPL v3, combina la solidez técnica de KVM+QEMU con una interfaz web de administración integrada, y es comparable en capacidades a soluciones empresariales de pago. Por estas razones, Proxmox VE 9.1 se instalará en modo bare-metal sobre el equipo HP con Intel Core i5-3470, dedicándolo por completo al hipervisor tal como lo exige la arquitectura Tipo 1.
+
+Para cubrir el Tipo 2, el equipo eligió Oracle VirtualBox. Su portabilidad multiplataforma —funciona sobre Windows, Linux y macOS— y su disponibilidad gratuita para uso educativo lo hacen la opción más práctica para el equipo de desarrollo. A diferencia de VMware Workstation, que requiere licencia comercial, VirtualBox se instala como una aplicación estándar sobre el sistema operativo anfitrión sin requerir modificaciones al sistema ni arranque especializado. VirtualBox correrá sobre Pop!_OS 24.04 LTS en el equipo con Intel Core i5-12450H. Esta asignación responde también a una restricción de hardware: Proxmox necesita dedicar el equipo por completo, y el equipo HP era el único disponible para ese propósito.
+
+En cuanto a los sistemas operativos de las máquinas virtuales, el equipo optó por Ubuntu Server 24.04.4 LTS para todas las VMs de servidor. Esta elección se fundamenta en que Ubuntu Server tiene soporte de largo plazo (LTS), repositorios actualizados con las versiones más recientes de Apache y PostgreSQL, y amplia documentación para configuraciones de red con Netplan, que será necesaria para asignar IPs estáticas en la VM de VirtualBox. Para la VM cliente se eligió Fedora Workstation, que al ser una distribución orientada a escritorio permite usar herramientas gráficas como DBeaver para conectarse a las bases de datos y un navegador web para verificar el funcionamiento de Apache, lo cual facilita la validación del entorno desde una perspectiva de usuario final.
+
+---
+
+## 6.2 La elección de Apache y PostgreSQL como servicios del entorno
+
+El proyecto establece que la infraestructura de ACME requiere un servidor web y un servidor de base de datos. A partir de esa definición, el equipo analizó qué software concreto utilizar en cada rol.
+
+Para el servidor web, Apache HTTP Server es el estándar de referencia histórico en el mundo del software de código abierto, con el mayor despliegue acumulado a nivel mundial (Netcraft, 2024). Su arquitectura modular y el módulo de procesamiento MPM `event`, que gestiona conexiones mediante un modelo de hilos y eventos asíncronos, lo hacen representativo de lo que ACME encontraría en un entorno de producción real. Frente a alternativas como Nginx, Apache tiene mayor documentación académica y su comportamiento bajo carga concurrente está más ampliamente estudiado, lo que facilitará la interpretación de los resultados del benchmark.
+
+Para el servidor de base de datos, PostgreSQL se seleccionó por dos razones complementarias. La primera es su robustez en producción: cumple los estándares ACID y es reconocido como uno de los motores relacionales más sólidos del ecosistema open-source. La segunda razón es metodológica: PostgreSQL expone, en comparación con MySQL o MariaDB, una mayor variedad de operaciones que permiten ejercitar los subsistemas de CPU y almacenamiento del hipervisor de forma diferenciada. Operaciones como ordenamientos sobre grandes volúmenes, agregaciones estadísticas con percentiles, joins analíticos y funciones matemáticas de punto flotante intensivas en FPU cubren dimensiones del rendimiento que una prueba simple de INSERT no alcanzaría. Esta variedad es lo que hará posible construir un benchmark con mayor profundidad comparativa entre Proxmox y VirtualBox.
+
+---
+
+## 6.3 La definición del modo de red como decisión del equipo
+
+El proyecto exige que las tres VMs, gestionadas por dos hipervisores distintos en dos equipos físicos diferentes, se comuniquen entre sí. La configuración de red no estaba prescrita: el equipo debía analizarla y resolverla. Esta fue la decisión técnica más analítica del proceso de diseño.
+
+El marco teórico describe cuatro modos de red disponibles. El equipo descartó tres de ellos tras contrastarlos con los requisitos concretos del proyecto. NAT fue el primero en quedar fuera: aunque permite que una VM acceda a Internet, no la expone en la red local, por lo que los servicios de Apache y PostgreSQL no serían alcanzables desde otras máquinas sin configurar port forwarding manual por cada puerto, lo que resulta impráctico cuando hay múltiples servicios y múltiples clientes. La red interna (Internal Network) fue descartada porque opera únicamente dentro del mismo hipervisor, lo que impide por diseño la comunicación entre la VM de Proxmox y la de VirtualBox, que corren en equipos físicos distintos. Host-Only fue descartado porque aísla la red del entorno exterior, impidiendo igualmente la comunicación entre los dos equipos.
+
+El modo Adaptador Puente (Bridge) es la única opción que resuelve todos los requisitos al mismo tiempo. Bridge opera en capa 2 del modelo OSI y conecta la interfaz virtual de la VM directamente al switch físico de la red, haciendo que cada VM aparezca como un nodo independiente con su propia dirección MAC e IP en la subred `192.168.137.0/24`. Al estar en la misma subred física, las VMs de Proxmox y VirtualBox podrán comunicarse de forma directa y transparente sin importar el tipo de hipervisor que las gestione. En Proxmox, este bridge se implementará a través de la interfaz `vmbr0`, que se crea automáticamente durante la instalación. En VirtualBox, se configurará el adaptador en modo Adaptador Puente sobre la interfaz Ethernet del equipo anfitrión. La VM Fedora Workstation utilizará además un segundo adaptador en modo NAT exclusivamente para acceso a Internet, combinando ambos modos para satisfacer simultáneamente los dos requisitos de conectividad.
+
+---
+
+## 6.4 El diseño del benchmark como solución a una limitación del entorno
+
+El proyecto requiere medir y comparar el rendimiento de ambos hipervisores bajo condiciones de carga equivalentes. El principio fundamental del benchmarking comparativo es la equivalencia de condiciones: las VMs evaluadas deben tener las mismas configuraciones de vCPU, RAM, sistema operativo y versiones de software para que la comparación sea válida. Sin embargo, el equipo identificó una limitación estructural que no es posible eliminar: los dos equipos físicos disponibles tienen hardware profundamente diferente, con una brecha de nueve generaciones entre sus procesadores (Intel i5-3470 de 2013 en el equipo Proxmox vs. Intel i5-12450H de 2022 en el equipo VirtualBox) y una diferencia de almacenamiento tan significativa como la que existe entre un HDD mecánico y un SSD NVMe.
+
+La respuesta del equipo a esta limitación es controlar todas las variables que sí están bajo su control —mismo sistema operativo Ubuntu Server 24.04.4 LTS en ambas VMs, mismos 2 cores de vCPU, mismos 6 GB de RAM y mismas versiones de Apache y PostgreSQL— y documentar explícitamente la diferencia de hardware para que los resultados puedan interpretarse correctamente. En lugar de ignorar esta variable o intentar compensarla artificialmente, el equipo la incorporará como parte del análisis, separando el efecto del hardware del efecto del tipo de hipervisor al momento de interpretar los resultados.
+
+Para la ejecución del benchmark se desarrollarán dos scripts Python que correrán desde la MV Fedora Workstation, actuando esta como cliente externo y árbitro neutro de las mediciones. El primero, `benchmark_apache.py`, lanzará 2,000 peticiones HTTP hacia cada servidor utilizando 50 hilos concurrentes mediante `ThreadPoolExecutor`, midiendo el tiempo real de transferencia con `time.perf_counter()` para obtener RPS, latencia promedio, mínima, máxima y desviación estándar, además de registrar todos los códigos de estado recibidos. El segundo, `benchmark_postgresql.py`, se conectará directamente a cada instancia de PostgreSQL mediante `psycopg2` y ejecutará dos categorías de pruebas: pruebas de I/O que incluyen INSERT masivo de 300,000 filas sobre una tabla `UNLOGGED` con valores UUID y texto generados aleatoriamente, lectura secuencial con agregaciones, creación de índice y cinco lecturas por rangos indexados; y pruebas de CPU que incluyen ordenamiento de 500,000 valores aleatorios, agregaciones estadísticas con percentiles 50, 95 y 99, join analítico entre dos conjuntos generados en memoria, y funciones matemáticas FPU-intensivas combinando raíz cuadrada, logaritmo natural y potencias. Cada prueba de CPU se repetirá tres veces para promediar los tiempos y reducir la varianza por carga puntual del sistema. Usar Fedora como cliente externo garantizará que el benchmark mida el rendimiento real desde la perspectiva de un usuario final, sin que los recursos del hipervisor evaluado interfieran en la medición.
+
+---
+
 # 9. Respuesta a las preguntas iniciales
 
 ---
@@ -476,6 +530,18 @@ Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmo
 - La virtualización mixta (Tipo 1 + Tipo 2) es viable en producción real, representando arquitecturas híbridas donde los servidores críticos se despliegan en bare-metal y los entornos de desarrollo y pruebas en hipervisores Tipo 2 sobre equipos de usuario.
 
 - La diferencia entre HDD y SSD tiene mayor impacto en el rendimiento de bases de datos que cualquier otra variable del sistema. En operaciones de escritura masiva, la brecha puede superar el 280%, haciendo del almacenamiento el cuello de botella principal en cargas de trabajo de I/O intensivo.
+
+# 10. Conclusiones
+
+La diferencia entre un hipervisor Tipo 1 y uno Tipo 2 va más allá de una capa de software adicional: implica modelos de seguridad y administración distintos. Proxmox elimina el SO anfitrión como vector de ataque y centraliza la gestión en una interfaz web, mientras que VirtualBox gana en portabilidad y accesibilidad a costa de heredar las vulnerabilidades del sistema sobre el que corre. Ninguna arquitectura es universalmente superior; la elección adecuada depende del rol del servidor y los requisitos del entorno.
+
+La conectividad entre VMs gestionadas por hipervisores distintos no es un problema de compatibilidad entre plataformas sino un problema de capa de red. El modo Bridge lo resuelve porque opera en capa 2 del modelo OSI, antes de que el tipo de hipervisor tenga relevancia, lo que hace que esta solución sea aplicable a cualquier escenario de infraestructura mixta.
+
+Proxmox VE demuestra que una plataforma de virtualización open-source puede ser técnicamente comparable a soluciones comerciales. La combinación KVM+QEMU+VirtIO reduce el overhead de CPU e I/O a niveles que hacen viable su uso en producción real sin licenciamiento comercial, lo que lo convierte en una alternativa legítima frente a VMware ESXi o Citrix Hypervisor para organizaciones con restricciones de presupuesto como ACME.
+
+En cualquier benchmark comparativo, las variables que no se pueden controlar deben documentarse explícitamente y formar parte del análisis. La diferencia de hardware entre los dos equipos disponibles no invalida la comparación, pero sí condiciona la interpretación: sin ese reconocimiento, los resultados llevarían a conclusiones incorrectas sobre los hipervisores en lugar de sobre el hardware que los soporta.
+
+---
 
 # Referencias
 
