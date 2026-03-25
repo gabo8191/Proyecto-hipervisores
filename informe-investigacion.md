@@ -78,6 +78,7 @@ Tunja
   - [9.5. Nivel Reflexivo](#95-nivel-reflexivo)
     - [9.5.1. Retos técnicos y de compatibilidad encontrados](#951-retos-técnicos-y-de-compatibilidad-encontrados)
     - [9.5.2. Lecciones aprendidas](#952-lecciones-aprendidas)
+  - [9.6. Respuesta a la pregunta inicial](#96-respuesta-a-la-pregunta-inicial)
 - [10. Conclusiones](#10-conclusiones)
 - [Referencias](#referencias)
 
@@ -348,17 +349,25 @@ Un hipervisor de Tipo 1 (bare-metal) como Proxmox VE se instala directamente sob
 
 En términos de rendimiento, bajo hardware idéntico el Tipo 1 debería tener una ventaja marginal por su acceso directo al hardware. Sin embargo, en el proyecto se evidenció que el hardware del equipo anfitrión fue el factor dominante puesto que el equipo VirtualBox superó en rendimiento al equipo Proxmox en todas las pruebas, no por diferencias en el tipo de hipervisor, sino por la brecha generacional del hardware en el que se ejecutaba cada tipo de hipervisor.
 
+Por lo que se logró comprender que la elección del hipervisor no es una decisión única para toda la infraestructura, sino que puede variar según el rol de cada servidor dentro del proyecto.
+
 ### 9.1.2. Impacto en seguridad y aislamiento
 
 Se logró evidencia que el hipervisor Tipo 1 es más seguro en términos de aislamiento, esto debido a que en VirtualBox, el SO anfitrión (Pop!_OS) actúa como intermediario entre las VMs y el hardware, por lo que si ese SO es comprometido, todas las VMs quedan expuestas, mientrar que en Proxmox no existe ese intermediario, el hipervisor corre directamente sobre el hardware, por lo que un atacante que logre comprometer una VM se encontrará de frente con el hipervisor bare-metal, sin poder escalar al SO anfitrión debido a que no existe. A esto se suma que Proxmox permite configurar reglas de firewall individuales por VM desde su interfaz web, como se hizo con el bridge vmbr0 en el proyecto, añadiendo una capa de control de red adicional.
+
+Lo anterior nos guía al hecho de que la mejor decisión es asignar los servidores de producción al hipervisor Tipo 1, donde el aislamiento es más robusto y la superficie de ataque es menor.
 
 ### 9.1.3. Implicaciones en la gestión y administración
 
 Proxmox ofrece una interfaz web centralizada (`https://IP:8006`) la cual permite gestionar todas las VMs, monitorear recursos en tiempo real, crear snapshots, clonar VMs y gestionar almacenamiento desde un único panel, por su parte VirtualBox, al ser Tipo 2, depende del escritorio del SO anfitrión y su gestión es más manual e interactiva. En producción empresarial, Proxmox escala mejor al no requerir un SO base subyacente y al centralizar la administración de toda la infraestructura virtualizada.
 
+Esta diferencia en la capacidad de gestión fue determinante para entender por qué Proxmox resulta más adecuado en escenarios donde se administran múltiples servidores simultáneamente desde un único punto de control.
+
 ### 9.1.4. Proxmox VE como plataforma Tipo 1: componentes principales
 
 Proxmox VE está basado en Debian GNU/Linux e integra dos tecnologías de virtualización las cuales son KVM (Kernel-based Virtual Machine) para virtualización completa de hardware, y LXC (Linux Containers) para contenedores ligeros. En el proyecto, el componente de red fundamental fue el bridge vmbr0, a través del cual la VM "ServidorWEB" obtuvo conectividad con la red `192.168.137.0/24`, adicionalmente, la interfaz web de administración, accesible por el puerto 8006, permitió crear, configurar y monitorear la VM sin necesidad de interactuar directamente con la consola del servidor.
+
+Comprender estos componentes fue fundamental para configurar correctamente la conectividad de red entre las VMs del proyecto, ya que el bridge vmbr0 operó como el punto de integración entre la VM y la red física del laboratorio.
 
 ---
 
@@ -483,7 +492,9 @@ Los resultados no invalidan la superioridad teórica del Tipo 1, puesto que la d
 | **Almacenamiento** | HDD mecánico | SSD NVMe |
 
 
-La diferencia más notable fue en I/O de escritura masiva (+280.3%), explicada principalmente por la brecha entre HDD y SSD NVMe. Las diferencias en CPU (entre +30% y +62%) son coherentes con la brecha generacional entre ambos procesadores debiod a que el equipo de virtualbox es 9 generaciones más reciente. Bajo hardware idéntico, se esperaría que Proxmox (Tipo 1) sea igual o ligeramente más eficiente, dado que elimina la capa del SO anfitrión y gestiona los recursos con menor sobrecarga.
+La diferencia más notable fue en I/O de escritura masiva (+280.3%), explicada principalmente por la brecha entre HDD y SSD NVMe. Las diferencias en CPU (entre +30% y +62%) son coherentes con la brecha generacional entre ambos procesadores debido a que el equipo de virtualbox es 9 generaciones más reciente. Bajo hardware idéntico, se esperaría que Proxmox (Tipo 1) sea igual o ligeramente más eficiente, dado que elimina la capa del SO anfitrión y gestiona los recursos con menor sobrecarga.
+
+Esta distinción tiene implicaciones directas sobre cómo debe planificarse una migración de infraestructura, puesto que los beneficios de la virtualización en términos de rendimiento solo se materializan plenamente cuando el hardware anfitrión es adecuado para la carga de trabajo. Migrar a un hipervisor Tipo 1 sobre hardware envejecido puede resultar en rendimiento inferior al del servidor físico original, mientras que la misma migración sobre hardware moderno con almacenamiento SSD produciría resultados opuestos. Esta distinción fue clave para que el equipo pudiera interpretar los resultados del benchmark con rigor, evitando atribuir al tipo de hipervisor diferencias de rendimiento que en realidad se originan en el hardware subyacente.
 
 ---
 
@@ -501,7 +512,8 @@ La selección del hipervisor adecuado depende del rol que cumple cada servidor d
 
 ### 9.4.2. Costos de mantenimiento y soporte
 
-Proxmox VE es open-source con suscripción empresarial opcional. Sin suscripción funciona completamente pero recibe actualizaciones desde el repositorio pve-no-subscription. El costo principal asociado es el hardware dedicado bare-metal y la curva de aprendizaje inicial para la administración del sistema. por otra parte, VirtualBox es gratuito para uso personal y evaluación, pero en entornos productivos deben considerarse varios costos adicionales: el SO anfitrión (licencias Windows si aplica), el Extension Pack, el cual bajo su licencia PUEL requiere licencia comercial de Oracle para uso empresarial, y la pérdida de eficiencia inherente a la capa adicional de abstracción.
+La optimización de costos es uno de los argumentos centrales para justificar una migración hacia entornos virtualizados. Proxmox VE es open-source con suscripción empresarial opcional; sin suscripción funciona completamente pero recibe actualizaciones desde el repositorio pve-no-subscription. Al no requerir licenciamiento por servidor virtualizado, permite consolidar múltiples servidores físicos en un único equipo sin incrementar los costos de software, reduciendo además los gastos asociados a energía, espacio físico y mantenimiento de hardware, sin embargo, el costo principal asociado es el hardware dedicado bare-metal y la curva de aprendizaje inicial para la administración del sistema. VirtualBox, por su parte, es gratuito para uso personal y evaluación, pero en entornos productivos deben considerarse varios costos adicionales: el SO anfitrión (licencias Windows si aplica), el Extension Pack el cual bajo su licencia PUEL requiere licencia comercial de Oracle para uso empresarial.
+
 
 ### 9.4.3. Recomendación estratégica para ACME
 
@@ -523,13 +535,25 @@ Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmo
 
 - La interoperabilidad entre hipervisores de distinto tipo es posible sin configuraciones complejas, siempre que ambas VMs compartan la misma red física a través de Bridge networking. El tipo de hipervisor no es una barrera para la comunicación entre máquinas virtuales.
 
-- Para benchmarks comparativos válidos entre hipervisores, el hardware anfitrión debe ser controlado como variable. De lo contrario, los resultados reflejan diferencias de hardware más que del software de virtualización, abriendo la posibilidad de llegar a conclusiones incorrectas.
+- Para benchmarks comparativos válidos entre hipervisores, el hardware anfitrión debe ser controlado como variable. De lo contrario, los resultados reflejan diferencias de hardware más que del software de virtualización, abriendo la posibilidad de llegar a conclusiones incorrectas sobre qué plataforma conviene adoptar.
 
 - Proxmox VE es una plataforma robusta y accesible para entornos académicos y productivos de escala media, con una curva de aprendizaje manejable gracias a su interfaz web y documentación oficial. La instalación bare-metal requiere dedicar el equipo completo al hipervisor, lo cual debe planificarse con anticipación.
 
 - La virtualización mixta (Tipo 1 + Tipo 2) es viable en producción real, representando arquitecturas híbridas donde los servidores críticos se despliegan en bare-metal y los entornos de desarrollo y pruebas en hipervisores Tipo 2 sobre equipos de usuario.
 
-- La diferencia entre HDD y SSD tiene mayor impacto en el rendimiento de bases de datos que cualquier otra variable del sistema. En operaciones de escritura masiva, la brecha puede superar el 280%, haciendo del almacenamiento el cuello de botella principal en cargas de trabajo de I/O intensivo.
+- La diferencia entre HDD y SSD tiene mayor impacto en el rendimiento de bases de datos que cualquier otra variable del sistema. En operaciones de escritura masiva, la brecha puede superar el 280%, lo que refuerza que la selección del hipervisor y la modernización del hardware son decisiones que deben tomarse de forma conjunta, no independiente.
+
+## 9.6. Respuesta a la pregunta inicial
+
+¿Cómo puede la empresa ACME migrar su infraestructura basada en servidores físicos hacia un entorno virtualizado para optimizar costos y disponibilidad, considerando la selección del hipervisor, las herramientas de gestión de VMs y la conectividad de red interna?
+
+La evidencia obtenida a lo largo del proyecto permite entender que ACME no debe elegir entre un tipo u otro de forma absoluta, sino asignar cada hipervisor según el rol del servidor. Proxmox VE es la plataforma adecuada para los servidores de producción (web y base de datos), esto debido a que al instalarse directamente sobre el hardware elimina la capa del SO anfitrión, reduce la superficie de ataque, centraliza la administración en una interfaz web y no requiere licenciamiento comercial, por otra parte, VirtualBox es la plataforma adecuada para el servidor de desarrollo, a causa de su facilidad de instalación, portabilidad entre equipos y herramientas como los snapshots rápidos ajustándose a las necesidades del equipo de desarrollo sin justificar el costo y la complejidad de un hipervisor bare-metal. El factor más importante que esta investigación añade a esa decisión es que el hardware anfitrión pesa más que el tipo de hipervisor en el rendimiento final, puesto que migrar a Proxmox sobre un equipo con HDD y procesador de tercera generación no garantiza mejora frente al servidor físico original, por lo que la modernización del hardware y la virtualización deben planificarse de forma conjunta.
+
+Respecto a las herramientas de gestión de máquinas virtuales, Proxmox ofrece de forma nativa las capacidades que ACME requiere para mejorar la disponibilidad frente a su infraestructura física actual, tales como snapshots para capturar el estado de una VM antes de realizar cambios de riesgo, clonación para replicar entornos en minutos, monitoreo de CPU y RAM en tiempo real desde un panel web centralizado, y la posibilidad de gestionar múltiples servidores virtuales desde un único punto de administración. Estas funcionalidades no están disponibles de forma integrada en servidores físicos tradicionales representando una de las principales ventajas a nivel operativo de la migración. Por su parte, VirtualBox también dispone de herramientas como snapshots, clonación de máquinas virtuales y monitoreo básico de recursos desde su interfaz gráfica, sin embargo, estas están orientadas a entornos individuales de desarrollo y pruebas, a diferencia de Proxmox, no ofrece de manera nativa una gestión centralizada multiusuario ni administración remota con enfoque empresarial, ya que depende del sistema operativo anfitrión y está diseñado principalmente para su uso en estaciones de trabajo, por lo tanto, ambas herramientas resultan complementarias dentro de la arquitectura propuesta, donde Proxmox aporta capacidades de gestión a nivel productivo y VirtualBox responde a las necesidades de flexibilidad y experimentación del entorno de desarrollo.
+
+En cuanto a la conectividad de red interna, la interconexión entre los servidores virtuales de ACME no depende del tipo de hipervisor que los gestione, ya que el proyecto demostró que una VM gestionada por Proxmox y otra por VirtualBox pueden comunicarse de forma transparente cuando ambas usan el modo Adaptador Puente sobre la misma red física. Para ACME, esto significa que la migración puede hacerse de forma gradual donde los servidores ya migrados a VMs y los servidores físicos que aún no han sido migrados pueden coexistir en la misma red sin interrupciones de servicio, lo que reduce el riesgo operativo de la transición.
+
+Por lo que la migración de ACME es técnicamente viable, económicamente justificable con Proxmox como plataforma principal, y operativamente segura si se planifica en fases que combinen la modernización del hardware con la virtualización progresiva de los servidores, comenzando por los de producción en Proxmox y manteniendo el entorno de desarrollo en VirtualBox.
 
 # 10. Conclusiones
 
