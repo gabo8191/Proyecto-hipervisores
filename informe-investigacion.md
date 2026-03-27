@@ -25,66 +25,417 @@ Tunja
 
 - [Migración de infraestructura física a entornos virtualizados](#migración-de-infraestructura-física-a-entornos-virtualizados)
   - [Tabla de contenido](#tabla-de-contenido)
-- [1. Investigación](#1-investigación)
-  - [1.1 Virtualización: fundamentos y evolución histórica](#11-virtualización-fundamentos-y-evolución-histórica)
-  - [1.2 Hipervisores: arquitectura y clasificación](#12-hipervisores-arquitectura-y-clasificación)
-    - [1.2.1 Hipervisor de Tipo 1 (bare-metal)](#121-hipervisor-de-tipo-1-bare-metal)
-    - [1.2.2 Hipervisor de Tipo 2 (hosted)](#122-hipervisor-de-tipo-2-hosted)
-    - [1.2.3 Comparación de arquitecturas](#123-comparación-de-arquitecturas)
-  - [1.3 Proxmox VE: componentes y arquitectura interna](#13-proxmox-ve-componentes-y-arquitectura-interna)
-    - [1.3.1 KVM (Kernel-based Virtual Machine)](#131-kvm-kernel-based-virtual-machine)
-    - [1.3.2 QEMU como emulador de hardware](#132-qemu-como-emulador-de-hardware)
-    - [1.3.3 Paravirtualización con VirtIO](#133-paravirtualización-con-virtio)
-  - [1.4 Oracle VirtualBox: arquitectura y características](#14-oracle-virtualbox-arquitectura-y-características)
-  - [1.5 Modos de red en entornos virtualizados](#15-modos-de-red-en-entornos-virtualizados)
-    - [1.5.1 NAT (Network Address Translation)](#151-nat-network-address-translation)
-    - [1.5.2 Adaptador puente (Bridge)](#152-adaptador-puente-bridge)
-    - [1.5.3 Red interna (Internal Network)](#153-red-interna-internal-network)
-    - [1.5.4 Solo-anfitrión (Host-Only)](#154-solo-anfitrión-host-only)
-  - [1.6 Benchmarking de infraestructura virtualizada](#16-benchmarking-de-infraestructura-virtualizada)
-    - [1.6.1 Concepto de benchmark](#161-concepto-de-benchmark)
-    - [1.6.2 Métricas de rendimiento relevantes](#162-métricas-de-rendimiento-relevantes)
-  - [1.7 Apache HTTP Server en entornos virtualizados](#17-apache-http-server-en-entornos-virtualizados)
-  - [1.8 PostgreSQL en entornos virtualizados](#18-postgresql-en-entornos-virtualizados)
-  - [1.9 Implicaciones de seguridad según el tipo de hipervisor](#19-implicaciones-de-seguridad-según-el-tipo-de-hipervisor)
-- [2. Análisis y síntesis](#2-análisis-y-síntesis)
-  - [2.1 Proxmox VE y VirtualBox como representantes de cada arquitectura](#21-proxmox-ve-y-virtualbox-como-representantes-de-cada-arquitectura)
-  - [2.2 La elección de Apache y PostgreSQL como servicios del entorno](#22-la-elección-de-apache-y-postgresql-como-servicios-del-entorno)
-  - [2.3 La definición del modo de red como decisión del equipo](#23-la-definición-del-modo-de-red-como-decisión-del-equipo)
-  - [2.4 El diseño del benchmark como solución a una limitación del entorno](#24-el-diseño-del-benchmark-como-solución-a-una-limitación-del-entorno)
-- [3. Respuesta a las preguntas iniciales](#3-respuesta-a-las-preguntas-iniciales)
-  - [3.1. Nivel Conceptual](#31-nivel-conceptual)
-    - [3.1.1. Diferencias fundamentales entre hipervisores de Tipo 1 y Tipo 2](#311-diferencias-fundamentales-entre-hipervisores-de-tipo-1-y-tipo-2)
-    - [3.1.2. Impacto en seguridad y aislamiento](#312-impacto-en-seguridad-y-aislamiento)
-    - [3.1.3. Implicaciones en la gestión y administración](#313-implicaciones-en-la-gestión-y-administración)
-    - [3.1.4. Proxmox VE como plataforma Tipo 1: componentes principales](#314-proxmox-ve-como-plataforma-tipo-1-componentes-principales)
-  - [3.2. Nivel Técnico](#32-nivel-técnico)
-    - [3.2.1. Instalación y configuración inicial de Proxmox y VirtualBox](#321-instalación-y-configuración-inicial-de-proxmox-y-virtualbox)
-    - [3.2.2. Modos de red: NAT, Bridge, Host-Only e Internal](#322-modos-de-red-nat-bridge-host-only-e-internal)
-    - [3.2.3. Instalación y configuración de Apache](#323-instalación-y-configuración-de-apache)
-    - [3.2.4. Interconexión de VMs gestionadas por distintos hipervisores](#324-interconexión-de-vms-gestionadas-por-distintos-hipervisores)
-    - [3.2.5. Instalación y configuración de PostgreSQL](#325-instalación-y-configuración-de-postgresql)
-    - [3.2.6. Direccionamiento IP y configuración de interfaces de red](#326-direccionamiento-ip-y-configuración-de-interfaces-de-red)
-    - [3.2.7. Pruebas de conectividad entre VMs](#327-pruebas-de-conectividad-entre-vms)
-  - [3.3. Nivel Comparativo](#33-nivel-comparativo)
-    - [3.3.1. Metodología aplicada para los benchmarks](#331-metodología-aplicada-para-los-benchmarks)
-    - [3.3.2. Resultados del benchmark de Apache](#332-resultados-del-benchmark-de-apache)
-    - [3.3.3. Resultados del benchmark de PostgreSQL](#333-resultados-del-benchmark-de-postgresql)
-    - [3.3.4. Interpretación de los resultados](#334-interpretación-de-los-resultados)
-  - [3.4. Nivel Estratégico](#34-nivel-estratégico)
-    - [3.4.1. Criterios de selección del hipervisor según tipo de servidor](#341-criterios-de-selección-del-hipervisor-según-tipo-de-servidor)
-    - [3.4.2. Costos de mantenimiento y soporte](#342-costos-de-mantenimiento-y-soporte)
-    - [3.4.3. Recomendación estratégica para ACME](#343-recomendación-estratégica-para-acme)
-  - [3.5. Nivel Reflexivo](#35-nivel-reflexivo)
-    - [3.5.1. Retos técnicos y de compatibilidad encontrados](#351-retos-técnicos-y-de-compatibilidad-encontrados)
-    - [3.5.2. Lecciones aprendidas](#352-lecciones-aprendidas)
-  - [3.6. Respuesta a la pregunta inicial](#36-respuesta-a-la-pregunta-inicial)
-- [4. Conclusiones](#4-conclusiones)
+- [GLOSARIO](#glosario)
+- [RESUMEN](#resumen)
+- [INTRODUCCIÓN](#introducción)
+- [1. PUNTO DE PARTIDA](#1-punto-de-partida)
+  - [1.1. Tema principal](#11-tema-principal)
+  - [1.2. Pregunta inicial](#12-pregunta-inicial)
+  - [1.3. ¿Qué sabemos?](#13-qué-sabemos)
+- [2. FORMACIÓN DE EQUIPOS](#2-formación-de-equipos)
+- [3. DEFINICIÓN DEL PRODUCTO FINAL](#3-definición-del-producto-final)
+  - [3.1. Producto a desarrollar](#31-producto-a-desarrollar)
+  - [3.2. ¿Qué hay que saber?](#32-qué-hay-que-saber)
+    - [3.2.1. Nivel Conceptual](#321-nivel-conceptual)
+    - [3.2.2. Nivel Técnico](#322-nivel-técnico)
+    - [3.2.3. Nivel Comparativo](#323-nivel-comparativo)
+    - [3.2.4. Nivel Estratégico](#324-nivel-estratégico)
+    - [3.2.5. NIvel Reflexivo](#325-nivel-reflexivo)
+  - [3.3. ¿Qué habilidades blandas se van a desarrollar?](#33-qué-habilidades-blandas-se-van-a-desarrollar)
+    - [3.3.1. Trabajo en equipo y colaboración](#331-trabajo-en-equipo-y-colaboración)
+    - [3.3.1.1. Estrategia a aplicar](#3311-estrategia-a-aplicar)
+    - [3.3.2. Resolución de problemas y adaptabilidad](#332-resolución-de-problemas-y-adaptabilidad)
+    - [3.3.2.1. Estrategia a aplicar](#3321-estrategia-a-aplicar)
+- [4. Planificación](#4-planificación)
+- [5. Investigación](#5-investigación)
+  - [5.1 Virtualización: fundamentos y evolución histórica](#51-virtualización-fundamentos-y-evolución-histórica)
+  - [5.2 Hipervisores: arquitectura y clasificación](#52-hipervisores-arquitectura-y-clasificación)
+    - [5.2.1 Hipervisor de Tipo 1 (bare-metal)](#521-hipervisor-de-tipo-1-bare-metal)
+    - [5.2.2 Hipervisor de Tipo 2 (hosted)](#522-hipervisor-de-tipo-2-hosted)
+    - [5.2.3 Comparación de arquitecturas](#523-comparación-de-arquitecturas)
+  - [5.3 Proxmox VE: componentes y arquitectura interna](#53-proxmox-ve-componentes-y-arquitectura-interna)
+    - [5.3.1 KVM (Kernel-based Virtual Machine)](#531-kvm-kernel-based-virtual-machine)
+    - [5.3.2 QEMU como emulador de hardware](#532-qemu-como-emulador-de-hardware)
+    - [5.3.3 Paravirtualización con VirtIO](#533-paravirtualización-con-virtio)
+  - [5.4 Oracle VirtualBox: arquitectura y características](#54-oracle-virtualbox-arquitectura-y-características)
+  - [5.5 Modos de red en entornos virtualizados](#55-modos-de-red-en-entornos-virtualizados)
+    - [5.5.1 NAT (Network Address Translation)](#551-nat-network-address-translation)
+    - [5.5.2 Adaptador puente (Bridge)](#552-adaptador-puente-bridge)
+    - [5.5.3 Red interna (Internal Network)](#553-red-interna-internal-network)
+    - [5.5.4 Solo-anfitrión (Host-Only)](#554-solo-anfitrión-host-only)
+  - [5.6 Benchmarking de infraestructura virtualizada](#56-benchmarking-de-infraestructura-virtualizada)
+    - [5.6.1 Concepto de benchmark](#561-concepto-de-benchmark)
+    - [5.6.2 Métricas de rendimiento relevantes](#562-métricas-de-rendimiento-relevantes)
+  - [5.7 Apache HTTP Server en entornos virtualizados](#57-apache-http-server-en-entornos-virtualizados)
+  - [5.8 PostgreSQL en entornos virtualizados](#58-postgresql-en-entornos-virtualizados)
+  - [5.9 Implicaciones de seguridad según el tipo de hipervisor](#59-implicaciones-de-seguridad-según-el-tipo-de-hipervisor)
+- [6. Análisis y síntesis](#6-análisis-y-síntesis)
+  - [6.1 Proxmox VE y VirtualBox como representantes de cada arquitectura](#61-proxmox-ve-y-virtualbox-como-representantes-de-cada-arquitectura)
+  - [6.2 La elección de Apache y PostgreSQL como servicios del entorno](#62-la-elección-de-apache-y-postgresql-como-servicios-del-entorno)
+  - [6.3 La definición del modo de red como decisión del equipo](#63-la-definición-del-modo-de-red-como-decisión-del-equipo)
+  - [6.4 El diseño del benchmark como solución a una limitación del entorno](#64-el-diseño-del-benchmark-como-solución-a-una-limitación-del-entorno)
+- [7. Respuesta a las preguntas iniciales](#7-respuesta-a-las-preguntas-iniciales)
+  - [7.1. Nivel Conceptual](#71-nivel-conceptual)
+    - [7.1.1. Diferencias fundamentales entre hipervisores de Tipo 1 y Tipo 2](#711-diferencias-fundamentales-entre-hipervisores-de-tipo-1-y-tipo-2)
+    - [7.1.2. Impacto en seguridad y aislamiento](#712-impacto-en-seguridad-y-aislamiento)
+    - [7.1.3. Implicaciones en la gestión y administración](#713-implicaciones-en-la-gestión-y-administración)
+    - [7.1.4. Proxmox VE como plataforma Tipo 1: componentes principales](#714-proxmox-ve-como-plataforma-tipo-1-componentes-principales)
+  - [7.2. Nivel Técnico](#72-nivel-técnico)
+    - [7.2.1. Instalación y configuración inicial de Proxmox y VirtualBox](#721-instalación-y-configuración-inicial-de-proxmox-y-virtualbox)
+    - [7.2.2. Modos de red: NAT, Bridge, Host-Only e Internal](#722-modos-de-red-nat-bridge-host-only-e-internal)
+    - [7.2.3. Instalación y configuración de Apache](#723-instalación-y-configuración-de-apache)
+    - [7.2.4. Interconexión de VMs gestionadas por distintos hipervisores](#724-interconexión-de-vms-gestionadas-por-distintos-hipervisores)
+    - [7.2.5. Instalación y configuración de PostgreSQL](#725-instalación-y-configuración-de-postgresql)
+    - [7.2.6. Direccionamiento IP y configuración de interfaces de red](#726-direccionamiento-ip-y-configuración-de-interfaces-de-red)
+    - [7.2.7. Pruebas de conectividad entre VMs](#727-pruebas-de-conectividad-entre-vms)
+  - [7.3. Nivel Comparativo](#73-nivel-comparativo)
+    - [7.3.1. Metodología aplicada para los benchmarks](#731-metodología-aplicada-para-los-benchmarks)
+    - [7.3.2. Resultados del benchmark de Apache](#732-resultados-del-benchmark-de-apache)
+    - [7.3.3. Resultados del benchmark de PostgreSQL](#733-resultados-del-benchmark-de-postgresql)
+    - [7.3.4. Interpretación de los resultados](#734-interpretación-de-los-resultados)
+  - [7.4. Nivel Estratégico](#74-nivel-estratégico)
+    - [7.4.1. Criterios de selección del hipervisor según tipo de servidor](#741-criterios-de-selección-del-hipervisor-según-tipo-de-servidor)
+    - [7.4.2. Costos de mantenimiento y soporte](#742-costos-de-mantenimiento-y-soporte)
+    - [7.4.3. Recomendación estratégica para ACME](#743-recomendación-estratégica-para-acme)
+  - [7.5. Nivel Reflexivo](#75-nivel-reflexivo)
+    - [7.5.1. Retos técnicos y de compatibilidad encontrados](#751-retos-técnicos-y-de-compatibilidad-encontrados)
+    - [7.5.2. Lecciones aprendidas](#752-lecciones-aprendidas)
+  - [7.6. Respuesta a la pregunta inicial](#76-respuesta-a-la-pregunta-inicial)
+- [8. Conclusiones](#8-conclusiones)
 - [Referencias](#referencias)
+- [APÉNDICES](#apéndices)
 
 ---
 
-# 1. Investigación
+**LISTA DE TABLAS**
+
+[Tabla 1. Lo que sabemos y no sabemos](#tabla-1)
+
+[Tabla 2. Asignación de roles y responsabilidades del equipo de trabajo](#tabla-2)
+
+[Tabla 3. Comparación entre hipervisores tipo 1 y tipo 2](#tabla-3)
+
+**LISTA DE FIGURAS**
+
+[Figura 1. Tablero de Trello (previsualización autoría propia)](#figura-1)
+
+[Figura 2. Arquitectura básica Hipervisor Tipo 1](#figura-2)
+
+[Figura 3. Arquitectura básica Hipervisor Tipo 2](#figura-3)
+
+# GLOSARIO
+
+**Hipervisor de Tipo 1 (Bare-metal):** Software de virtualización que se
+ejecuta directamente sobre el hardware físico, sin necesidad de un
+sistema operativo anfitrión. Ofrece mayor rendimiento y seguridad.
+Ejemplo: Proxmox/KVM.
+
+**Hipervisor de Tipo 2 (Hosted):** Software de virtualización que se
+instala sobre un sistema operativo existente, actuando como una
+aplicación más del anfitrión. Ejemplo: VirtualBox.
+
+**Máquina Virtual (VM):** Entorno computacional emulado que simula el
+comportamiento de un equipo físico, con CPU virtual, memoria RAM
+asignada y almacenamiento virtual propios.
+
+**Proxmox VE:** Plataforma de virtualización de código abierto de Tipo
+1, basada en KVM y LXC, orientada a la gestión empresarial de máquinas
+virtuales y contenedores.
+
+**VirtualBox:** Herramienta de virtualización de Tipo 2 desarrollada por
+Oracle, ampliamente utilizada en entornos de desarrollo y pruebas.
+
+**NAT (Network Address Translation):** Modo de red en el que la VM
+accede a redes externas a través de la dirección IP del anfitrión,
+ocultando su dirección interna.
+
+**Bridge (Red en puente):** Modo de red que conecta la VM directamente a
+la red física del anfitrión, otorgándole visibilidad como un nodo más de
+la red local.
+
+**Host-Only:** Modo de red que permite la comunicación exclusiva entre
+la VM y el equipo anfitrión, sin acceso a redes externas.
+
+**Red Interna (Internal Network):** Modo de red que conecta múltiples
+VMs entre sí en una red aislada, sin acceso al anfitrión ni a redes
+externas.
+
+**Apache:** Servidor web de código abierto ampliamente utilizado para
+servir contenido en la web.
+
+**PostgreSQL:** Sistema de gestión de bases de datos relacional de
+código abierto, reconocido por su robustez y cumplimiento de estándares
+SQL.
+
+**Snapshot:** Captura del estado de una máquina virtual en un momento
+determinado, que permite restaurar el sistema a ese punto si se producen
+errores.
+
+**Sysbench / fio / htop:** Herramientas de benchmarking y monitoreo
+utilizadas para medir el rendimiento de CPU, memoria RAM y operaciones
+de disco en entornos Linux.
+
+**Direccionamiento IP:** Esquema de asignación de identificadores
+numéricos a cada interfaz de red dentro de un entorno, que posibilita la
+comunicación entre nodos.
+
+**Migración de infraestructura:** Proceso de trasladar servicios, datos
+y cargas de trabajo desde servidores físicos hacia entornos
+virtualizados o en la nube.
+
+# RESUMEN
+
+El presente informe describe la fase inicial de un proyecto académico
+orientado a simular la migración de infraestructura física hacia
+entornos virtualizados para la empresa ficticia ACME. El equipo,
+conformado por cinco integrantes con roles definidos (Arquitecto de
+Infraestructura, Gerente de Proyecto, Ingeniero de Redes, Administrador
+de Sistemas e Ingeniero de Pruebas), plantea el diseño, configuración e
+interconexión de tres máquinas virtuales que representan un servidor web
+(Apache), un servidor de base de datos (PostgreSQL) y un servidor de
+desarrollo. La arquitectura contempla el uso simultáneo de un hipervisor
+de Tipo 1 (Proxmox) y uno de Tipo 2 (VirtualBox), con el fin de comparar
+su rendimiento bajo condiciones equivalentes de carga. El documento
+abarca el punto de partida, la conformación del equipo, la definición
+del producto final y la planificación mediante un tablero de Trello.
+
+**Palabras clave:** virtualización, hipervisor Tipo 1, hipervisor Tipo
+2, Proxmox, VirtualBox, máquina virtual, red interna, migración de
+infraestructura, rendimiento, conectividad.
+
+# INTRODUCCIÓN
+
+La virtualización de infraestructuras representa hoy una de las
+estrategias más relevantes en la gestión moderna de tecnologías de la
+información, al permitir optimizar recursos físicos, reducir costos
+operativos y mejorar la disponibilidad de los servicios críticos de una
+organización.
+
+En este contexto, el presente proyecto aborda el caso hipotético de la
+empresa ACME, cuya infraestructura basada en servidores físicos requiere
+ser migrada hacia un entorno virtualizado. La pregunta central que guía
+el desarrollo es: ¿cómo puede ACME migrar su infraestructura hacia un
+entorno virtualizado considerando la selección del hipervisor, las
+herramientas de gestión de VMs y la conectividad de red interna?
+
+Para dar respuesta a este interrogante, el equipo de trabajo propone
+implementar tres máquinas virtuales interconectadas, cada una gestionada
+por una plataforma de virtualización distinta, garantizando la
+coexistencia de al menos un hipervisor de Tipo 1 y uno de Tipo 2. A lo
+largo del proyecto se abordarán aspectos conceptuales, técnicos,
+comparativos, estratégicos y reflexivos, con el objetivo de emitir
+recomendaciones sustentadas en evidencia práctica que orienten
+decisiones reales de migración tecnológica.
+
+# 1. PUNTO DE PARTIDA
+
+## 1.1. Tema principal
+
+La migración de una infraestructura física a entornos virtualizados para
+optimizar costos y disponibilidad.
+
+## 1.2. Pregunta inicial
+
+¿Cómo puede la empresa ACME migrar su infraestructura basada en
+servidores físicos hacia un entorno virtualizado para optimizar costos y
+disponibilidad , considerando la selección del hipervisor, las
+herramientas de gestión de VMs y la conectividad de red interna?
+
+## 1.3. ¿Qué sabemos?
+
+<a id="tabla-1"></a>
+**Tabla 1.** Lo que sabemos y no sabemos
+
+| ¿Qué sabemos? | ¿Qué no sabemos? |
+|--------------|------------------|
+| Diferencia básica entre hipervisores de Tipo 1 y Tipo 2. | Lograr que una VM gestionada con VirtualBox y otra gestionada con Proxmox se comuniquen entre sí a través de una red interna común, siendo hipervisores de distinta naturaleza. |
+| Arquitectura de una VM: CPU virtual, memoria RAM asignada y almacenamiento virtual. | Proxmox como plataforma de virtualización de Tipo 1. |
+| VirtualBox como herramienta de virtualización de Tipo 2. | Instalación básica y configuración inicial de cada plataforma. |
+| Administración básica en Linux (Ubuntu, CentOS, Debian). | Modelos de red: NAT, Bridge, Host-Only e Internal a nivel conceptual. |
+| Comandos básicos de terminal para gestión y diagnóstico del sistema. | Metodología para registrar, comparar y analizar métricas de rendimiento entre distintos hipervisores. |
+|  |  |
+
+# 2. FORMACIÓN DE EQUIPOS
+
+La formación de un equipo con roles claramente definidos es crucial para
+el éxito del desarrollo del sistema. Cada miembro del equipo asume una
+responsabilidad específica que contribuye al funcionamiento integral del
+sistema. El equipo con su correspondiente rol y sus responsabilidades se
+muestra a continuación:
+
+<a id="tabla-2"></a>
+**Tabla 2.** Asignación de roles y responsabilidades del equipo de trabajo
+
+| Participante | Rol | Responsabilidades |
+|-------------|-----|-------------------|
+| Esteban Nicolas Peña Coronado | Arquitecto de infraestructura | Diseña la arquitectura de virtualización para los tres servidores críticos de ACME. Define los criterios de dimensionamiento de recursos (vCPU, RAM, disco) para cada máquina virtual, selecciona los hipervisores apropiados según el tipo de carga y documenta todas las decisiones técnicas de diseño. Coordina las pruebas comparativas de rendimiento y elabora las recomendaciones estratégicas con base en los resultados obtenidos. |
+| Luis Javier Lopez Galindo | Gerente de Proyecto | Planifica y coordina las actividades del equipo garantizando el cumplimiento de los plazos establecidos en el diagrama de Gantt. Distribuye las tareas, gestiona los riesgos del proyecto, facilita la comunicación interna entre los miembros y actúa como enlace con el departamento de TI de ACME. Valida que las decisiones técnicas estén debidamente fundamentadas y lidera la presentación de los resultados finales. |
+| Gabriel Fernando Castillo Mendieta | Ingeniero de Redes | Configura e implementa la red interna virtual que interconecta las tres máquinas virtuales, independientemente del hipervisor que las gestione. Define el esquema de direccionamiento IP, selecciona los modos de red adecuados (NAT, Bridge, Host-Only, Internal) en cada plataforma y garantiza la conectividad estable entre los servidores. Realiza pruebas de conectividad con herramientas como ping, traceroute y netstat, y documenta los problemas encontrados junto con sus soluciones. |
+| Johan Sebastián Gil Salamanca | Administrador de Sistemas | Instala y configura las plataformas de virtualización asignadas (Proxmox/KVM y VirtualBox), asegurando que un hipervisor de Tipo 1 y uno de Tipo 2 estén presentes en la arquitectura. Provisiona las máquinas virtuales con los sistemas operativos requeridos, gestiona snapshots y clonación de VMs, y resuelve problemas de compatibilidad entre plataformas. Documenta el proceso completo de instalación y configuración de cada entorno. |
+| Brayan Alejandro Cifuentes Quiroga | Ingeniero de pruebas | Diseña y ejecuta las pruebas de rendimiento sobre las tres máquinas virtuales bajo condiciones de carga equivalentes. Mide y registra métricas de uso de CPU, memoria RAM y velocidad de disco utilizando herramientas como htop, sysbench y fio. Analiza los resultados obtenidos, elabora comparativas entre hipervisores Tipo 1 y Tipo 2, y consolida los hallazgos en el informe final del proyecto. Realiza pruebas de conectividad y rendimiento, y registra los retos encontrados con sus soluciones. |
+
+
+
+# 3. DEFINICIÓN DEL PRODUCTO FINAL
+
+## 3.1. Producto a desarrollar
+
+El sistema consistirá en tres máquinas virtuales interconectadas en red,
+cada una gestionada con un software de virtualización diferente,
+asegurando la presencia de al menos un hipervisor de Tipo 1 y uno de
+Tipo 2 en la arquitectura. Cada VM representará uno de los servidores
+críticos de la empresa ACME: servidor web, servidor de base de datos y
+servidor de desarrollo. Las máquinas virtuales estarán configuradas para
+comunicarse entre sí a través de una red interna virtual,
+independientemente del tipo de hipervisor que las gestione.
+
+## 3.2. ¿Qué hay que saber?
+
+### 3.2.1. Nivel Conceptual
+
+- Explicar las diferencias fundamentales entre hipervisores de Tipo 1 y
+  Tipo 2, identificando las implicaciones de cada arquitectura en el
+  rendimiento del sistema.
+
+- Analizar el impacto que tiene cada tipo de hipervisor sobre la
+  seguridad, el aislamiento de máquinas virtuales y la superficie de
+  ataque.
+
+- Describir las implicaciones de cada arquitectura de hipervisor en la
+  gestión y administración de una infraestructura virtual.
+
+- Describir el funcionamiento de Proxmox como plataforma de
+  virtualización de Tipo 1, reconociendo sus componentes principales.
+
+### 3.2.2. Nivel Técnico
+
+- Instalar y realizar la configuración inicial de Proxmox y VirtualBox,
+  siguiendo procedimientos estandarizados para cada plataforma.
+
+- Distinguir en la práctica los modos de red NAT, Bridge, Host-Only e
+  Internal, identificando cuándo utilizar cada uno según los
+  requerimientos de conectividad del entorno.
+
+- Instalar y configurar un servidor web (Apache) en la máquina destinada
+  a este rol.
+
+- Configurar e interconectar una máquina virtual gestionada con
+  VirtualBox y otra gestionada con Proxmox a través de una red interna
+  común, verificando la comunicación bidireccional entre ambas
+  independientemente del tipo de hipervisor que las gestione.
+
+- Instalar y configurar un servidor de base de datos (PostgreSQL).
+
+- Configurar los servicios necesarios en el servidor web (Apache) y en
+  el servidor de base de datos (PostgreSQL) para permitir el acceso
+  desde otro nodo del entorno virtual.
+
+- Implementar un esquema de direccionamiento IP y configurar
+  correctamente las interfaces de red en cada máquina virtual.
+
+- Ejecutar pruebas de conectividad entre las VMs del entorno y verificar
+  la compatibilidad de protocolos de red entre distintos hipervisores.
+
+### 3.2.3. Nivel Comparativo
+
+- Medir el uso de CPU, consumo de memoria RAM y velocidad de operaciones
+  de disco en máquinas virtuales ejecutadas sobre hipervisores de Tipo 1
+  y Tipo 2.
+
+- Aplicar herramientas de monitoreo para recolectar métricas de
+  rendimiento bajo condiciones de carga equivalentes.
+
+- Interpretar y comparar los resultados obtenidos para establecer
+  diferencias observables de desempeño entre ambos tipos de hipervisor.
+
+- Definir y aplicar una metodología estructurada para registrar,
+  comparar e interpretar métricas de rendimiento entre distintos
+  hipervisores, estableciendo criterios claros de medición y análisis.
+
+### 3.2.4. Nivel Estratégico
+
+- Definir criterios técnicos, económicos y operativos para la selección
+  del hipervisor más adecuado según el tipo de servidor (web, base de
+  datos, desarrollo).
+
+- Evaluar los costos de mantenimiento y soporte de las plataformas de
+  virtualización consideradas para ACME.
+
+- Formular recomendaciones estratégicas sustentadas en evidencias
+  prácticas y alineadas con las necesidades operativas del negocio.
+
+### 3.2.5. NIvel Reflexivo
+
+- Identificar y documentar los retos técnicos y de compatibilidad
+  encontrados durante el montaje e integración del entorno virtualizado.
+
+- Registrar de forma estructurada los errores presentados, las causas
+  identificadas y las soluciones aplicadas a lo largo del proyecto.
+
+- Sintetizar las lecciones aprendidas durante la implementación,
+  destacando los aspectos que orientarán futuras migraciones de
+  infraestructura.
+
+## 3.3. ¿Qué habilidades blandas se van a desarrollar?
+
+### 3.3.1. Trabajo en equipo y colaboración
+
+El desarrollo de este proyecto exige que los cinco integrantes actúenen cohesión, dado que cada decisión técnica, desde la selección del
+hipervisor hasta la configuración de la red interna, afecta
+directamente el trabajo de los demás roles. La interdependencia entre
+el Arquitecto de Infraestructura, el Ingeniero de Redes, el
+Administrador de Sistemas, el Ingeniero de Calidad y el Gerente de
+Proyecto obliga a que la comunicación sea constante, clara y orientada
+a resultados. En este sentido, el proyecto representa un escenario
+real de colaboración técnica donde el éxito colectivo depende de la
+capacidad de cada miembro para aportar desde su rol sin perder de
+vista el objetivo común.
+
+### 3.3.1.1. Estrategia a aplicar
+
+Cada vez que un integrante complete una configuración o prueba dentro
+del entorno virtualizado, otro miembro del equipo la valida
+directamente en el sistema, señalando errores o propuestas de mejora
+de forma oral y en tiempo real. Esta dinámica entrena la escucha
+activa, la comunicación técnica precisa y la capacidad de dar y
+recibir retroalimentación constructiva, habilidades esenciales en
+cualquier equipo de TI profesional.
+
+### 3.3.2. Resolución de problemas y adaptabilidad
+
+La implementación práctica del proyecto, montar, configurar e
+interconectar tres máquinas virtuales gestionadas por hipervisores
+distintos, expone inevitablemente al equipo a situaciones de fallo,
+incompatibilidad de plataformas y configuraciones de red que no
+funcionan a la primera. Estas situaciones, constituyen oportunidades
+concretas para desarrollar la capacidad de analizar escenarios con
+información incompleta, evaluar alternativas con criterio técnico y
+tomar decisiones ágiles sin comprometer la estabilidad del entorno.
+Esta habilidad es una de las más valoradas en perfiles de TI
+orientados a infraestructura y operaciones.
+
+### 3.3.2.1. Estrategia a aplicar
+
+Cuando un integrante se encuentre bloqueado ante un problema técnico,
+será otro miembro del equipo, no necesariamente el experto en esa
+área, quien lidere la búsqueda de la solución. Esto obliga a todos los
+integrantes a razonar fuera de su zona de confort, a formular
+preguntas pertinentes y a construir soluciones de forma colaborativa,
+evitando la dependencia permanente en un solo recurso humano dentro
+del equipo y fortaleciendo la autonomía técnica de cada integrante.
+
+# 4. Planificación
+
+Se presenta el siguiente tablero de Trello (Apéndice A) que se planteó
+por el grupo para analizar y construir las etapas junto con sus tiempos
+estimados de desarrollo del proyecto:
+
+<a id="figura-1"></a>
+**Figura 1.** Tablero de Trello (previsualización autoría propia).
+
+![](./images/image1.png)
+
+# 5. Investigación
 
 La presente sección constituye el componente investigativo del proyecto, desarrollado en correspondencia con el paso 5 de la metodología de Aprendizaje Basado en Proyectos (ABP). Su propósito es dar respuesta sistemática a los vacíos de conocimiento identificados y construir el marco teórico que fundamenta las decisiones técnicas documentadas en el informe final.
 
@@ -92,7 +443,7 @@ Esta investigación aborda los siguientes ejes temáticos: fundamentos de virtua
 
 ---
 
-## 1.1 Virtualización: fundamentos y evolución histórica
+## 5.1 Virtualización: fundamentos y evolución histórica
 
 La virtualización es una tecnología que permite crear representaciones abstractas de recursos de cómputo (procesadores, memoria, almacenamiento y red), de manera que múltiples sistemas operativos o aplicaciones puedan ejecutarse de forma independiente y simultánea sobre un único hardware físico (Portnoy, 2012). Esta capacidad de abstracción transforma los recursos físicos en conjuntos de recursos lógicos administrables, desacoplando el software del hardware que lo ejecuta.
 
@@ -104,13 +455,13 @@ Los beneficios que impulsan su adopción en entornos empresariales son diversos.
 
 ---
 
-## 1.2 Hipervisores: arquitectura y clasificación
+## 5.2 Hipervisores: arquitectura y clasificación
 
 El componente de software que hace posible la virtualización es el hipervisor, también conocido como Virtual Machine Monitor (VMM). Su función es actuar como intermediario entre el hardware físico y las máquinas virtuales, gestionando el acceso a los recursos del sistema de forma controlada y aislada (Popek & Goldberg, 1974).
 
 La clasificación más utilizada en la literatura fue propuesta por Goldberg (1972), quien distingue dos tipos arquitectónicos fundamentales.
 
-### 1.2.1 Hipervisor de Tipo 1 (bare-metal)
+### 5.2.1 Hipervisor de Tipo 1 (bare-metal)
 
 Un hipervisor de Tipo 1 se instala y ejecuta **directamente sobre el hardware físico**, sin la intermediación de un sistema operativo anfitrión. Actúa él mismo como un sistema operativo minimalista cuya función principal es gestionar las máquinas virtuales y arbitrar el acceso de estas al hardware subyacente (Tanenbaum & Bos, 2015).
 
@@ -120,12 +471,13 @@ Ejemplos representativos incluyen VMware ESXi, Microsoft Hyper-V (en su modalida
 
 ![Especificaciones del equipo Proxmox](images/fig-037.png)
 
-**Figura 1.** Arquitectura basica Hipervisor Tipo 1.
+<a id="figura-2"></a>
+**Figura 2.** Arquitectura basica Hipervisor Tipo 1.
 
 </div>
 Las ventajas principales de este modelo son su menor latencia en el acceso al hardware (al eliminar la capa del SO anfitrión), su mayor eficiencia en la gestión de recursos y su superficie de ataque reducida desde el punto de vista de la seguridad (Laureano & Maziero, 2008).
 
-### 1.2.2 Hipervisor de Tipo 2 (hosted)
+### 5.2.2 Hipervisor de Tipo 2 (hosted)
 
 Un hipervisor de Tipo 2 se instala como una **aplicación sobre un sistema operativo anfitrión** preexistente (Windows, Linux, macOS). Las máquinas virtuales se ejecutan como procesos dentro de dicho sistema operativo, que actúa como intermediario entre el hipervisor y el hardware (Tanenbaum & Bos, 2015).
 
@@ -135,14 +487,16 @@ Ejemplos representativos incluyen **Oracle VirtualBox**, VMware Workstation/Fusi
 
 ![Especificaciones del equipo Proxmox](images/fig-038.png)
 
-**Figura 2.** Arquitectura basica Hipervisor Tipo 2.
+<a id="figura-3"></a>
+**Figura 3.** Arquitectura basica Hipervisor Tipo 2.
 
 </div>
 
 La principal desventaja es la capa adicional introducida por el sistema operativo anfitrión, que genera un *overhead* de rendimiento. No obstante, los hipervisores Tipo 2 son más fáciles de instalar, configurar y usar en estaciones de trabajo de desarrollo, lo que los hace idóneos para entornos de laboratorio, pruebas y desarrollo (Portnoy, 2012).
 
-### 1.2.3 Comparación de arquitecturas
-**Tabla 1.** Comparacion entre hipervisores tipo 1 y tipo 2.
+### 5.2.3 Comparación de arquitecturas
+<a id="tabla-3"></a>
+**Tabla 3.** Comparacion entre hipervisores tipo 1 y tipo 2.
 | Aspecto | Tipo 1 (Proxmox VE) | Tipo 2 (VirtualBox) |
 |---------|---------------------|---------------------|
 | **Instalación** | Bare-metal, ocupa el disco completo | Sobre SO anfitrión existente |
@@ -155,11 +509,11 @@ La principal desventaja es la capa adicional introducida por el sistema operativ
 
 ---
 
-## 1.3 Proxmox VE: componentes y arquitectura interna
+## 5.3 Proxmox VE: componentes y arquitectura interna
 
 Proxmox Virtual Environment (Proxmox VE) es una plataforma de virtualización empresarial de código abierto basada en Debian GNU/Linux, desarrollada por Proxmox Server Solutions GmbH y publicada bajo licencia GNU AGPL v3 (Proxmox Server Solutions, 2024). Integra en un único paquete dos tecnologías de virtualización complementarias: KVM para máquinas virtuales completas y LXC (Linux Containers) para contenedores del sistema. Para el presente proyecto se utilizó Proxmox VE en su versión 9.1.
 
-### 1.3.1 KVM (Kernel-based Virtual Machine)
+### 5.3.1 KVM (Kernel-based Virtual Machine)
 
 KVM es un módulo del kernel de Linux que convierte al propio kernel en un hipervisor de Tipo 1. Fue integrado al kernel Linux mainline a partir de la versión 2.6.20 (enero de 2007) y desde entonces constituye la base de virtualización de la mayor parte de la infraestructura en la nube pública (incluyendo AWS, Google Cloud y OpenStack) (Kivity et al., 2007).
 
@@ -167,13 +521,13 @@ KVM aprovecha las extensiones de virtualización por hardware presentes en los p
 
 Desde la perspectiva del sistema operativo invitado, KVM expone una CPU virtual (vCPU) que ejecuta instrucciones directamente en el hardware físico en modo no privilegiado. Las instrucciones que requieren acceso a recursos privilegiados son interceptadas por KVM, que las gestiona o las pasa al hardware de forma segura.
 
-### 1.3.2 QEMU como emulador de hardware
+### 5.3.2 QEMU como emulador de hardware
 
 KVM por sí solo gestiona la CPU y la memoria, pero no emula el hardware periférico (controladores de disco, tarjetas de red, etc.). Para esta función, Proxmox combina KVM con **QEMU** (Quick Emulator), un emulador de hardware completo de código abierto (Bartholomew, 2006).
 
 La combinación KVM+QEMU resulta en un sistema donde la CPU virtual se ejecuta de forma casi nativa (gracias a KVM) mientras que el hardware periférico es emulado o paravirtualizado por QEMU. Esta arquitectura es la que permite a Proxmox ofrecer VMs con rendimiento cercano al de hardware físico para cargas de trabajo de CPU intensivas.
 
-### 1.3.3 Paravirtualización con VirtIO
+### 5.3.3 Paravirtualización con VirtIO
 
 Un aspecto técnico relevante para comprender el rendimiento de la MV de Proxmox en este proyecto es el uso de **VirtIO**, un estándar de virtualización para dispositivos de E/S que permite a los sistemas operativos invitados comunicarse directamente con el hipervisor mediante una API optimizada, en lugar de emular hardware físico completo (Russell, 2008).
 
@@ -184,7 +538,7 @@ La paravirtualización reduce el overhead de las operaciones de I/O al eliminar 
 
 ---
 
-## 1.4 Oracle VirtualBox: arquitectura y características
+## 5.4 Oracle VirtualBox: arquitectura y características
 
 Oracle VirtualBox es un hipervisor de Tipo 2 de código abierto (GPLv2) mantenido por Oracle Corporation. Originalmente desarrollado por Innotek GmbH, fue adquirido por Sun Microsystems en 2008 y posteriormente por Oracle en 2010 (Oracle Corporation, 2024).
 
@@ -194,17 +548,17 @@ Una característica diferenciadora de VirtualBox respecto a otros hipervisores T
 
 ---
 
-## 1.5 Modos de red en entornos virtualizados
+## 5.5 Modos de red en entornos virtualizados
 
 La configuración de red es uno de los aspectos más críticos en el diseño de infraestructuras virtualizadas. Tanto VirtualBox como Proxmox ofrecen múltiples modos de red, cada uno con implicaciones distintas en cuanto a conectividad, aislamiento y rendimiento (Oracle Corporation, 2024; Proxmox Server Solutions, 2024).
 
-### 1.5.1 NAT (Network Address Translation)
+### 5.5.1 NAT (Network Address Translation)
 
 En el modo NAT, el hipervisor actúa como un router con traducción de direcciones. La VM obtiene una dirección IP privada en una subred gestionada exclusivamente por el hipervisor (típicamente `10.0.2.x` en VirtualBox). El tráfico saliente de la VM es mascarado por la IP del equipo anfitrión, permitiéndole acceder a Internet y a la red externa.
 
 La limitación principal de NAT es que **las VMs no son accesibles desde el exterior** sin configurar redirección de puertos (*port forwarding*) explícita, y tampoco pueden comunicarse directamente entre sí cuando están en distintas instancias NAT. Por esta razón, NAT es adecuado para acceso a Internet desde una VM pero no para comunicación inter-VM.
 
-### 1.5.2 Adaptador puente (Bridge)
+### 5.5.2 Adaptador puente (Bridge)
 
 En el modo Bridge, el hipervisor conecta la interfaz de red virtual de la VM directamente al switch virtual que interconecta el hardware físico de la red. Desde la perspectiva de la red, la VM aparece como un nodo independiente con su propia dirección MAC y puede recibir una IP directamente del servidor DHCP de la red física.
 
@@ -212,25 +566,25 @@ Este modo opera a **nivel de capa 2 (Ethernet)** del modelo OSI. El hipervisor c
 
 El modo Bridge es el que se utilizó en este proyecto para lograr la comunicación entre las VMs de Proxmox y VirtualBox, y constituye la respuesta técnica al problema de conectividad entre hipervisores distintos (ver sección 5.6).
 
-### 1.5.3 Red interna (Internal Network)
+### 5.5.3 Red interna (Internal Network)
 
 La red interna crea un segmento de red aislado que solo existe dentro del hipervisor. Las VMs conectadas a la misma red interna pueden comunicarse entre sí, pero no tienen acceso al equipo anfitrión ni a la red exterior. Es útil para simular redes privadas completamente aisladas, aunque requiere configuración manual de IP (no hay DHCP por defecto).
 
-### 1.5.4 Solo-anfitrión (Host-Only)
+### 5.5.4 Solo-anfitrión (Host-Only)
 
 El modo Host-Only crea una red virtual entre el equipo anfitrión y sus VMs. Las VMs pueden comunicarse entre sí y con el anfitrión, pero no tienen acceso a la red externa. VirtualBox crea una interfaz virtual en el anfitrión que actúa como gateway de esta red privada. Es frecuentemente utilizado para acceso SSH a VMs desde el equipo de desarrollo sin exponerlas a la red corporativa.
 
 ---
 
-## 1.6 Benchmarking de infraestructura virtualizada
+## 5.6 Benchmarking de infraestructura virtualizada
 
-### 1.6.1 Concepto de benchmark
+### 5.6.1 Concepto de benchmark
 
 Un *benchmark* es un procedimiento de evaluación estandarizado que mide el rendimiento de un sistema bajo condiciones controladas y reproducibles, con el propósito de comparar dicho rendimiento contra un punto de referencia o contra sistemas alternativos (Gray, 1993). En el contexto de la infraestructura virtualizada, los benchmarks permiten cuantificar el impacto del hipervisor sobre el rendimiento de las cargas de trabajo, aislando las variables del entorno.
 
 Un principio fundamental del benchmarking comparativo es la **equivalencia de condiciones**: para que la comparación sea válida, las VMs evaluadas deben tener configuraciones equivalentes de vCPU, RAM, sistema operativo y versiones de software. 
 
-### 1.6.2 Métricas de rendimiento relevantes
+### 5.6.2 Métricas de rendimiento relevantes
 
 Las métricas seleccionadas para este proyecto cubren los tres subsistemas que más frecuentemente constituyen cuellos de botella en cargas de trabajo de servidor:
 
@@ -250,7 +604,7 @@ Las métricas seleccionadas para este proyecto cubren los tres subsistemas que m
 - *Latencia de respuesta* (ms): tiempo transcurrido desde que el cliente envía la petición hasta que recibe la respuesta completa.
 - *Tasa de error*: porcentaje de peticiones que no reciben respuesta exitosa (HTTP 200).
 
-## 1.7 Apache HTTP Server en entornos virtualizados
+## 5.7 Apache HTTP Server en entornos virtualizados
 
 Apache HTTP Server es el servidor web de código abierto más ampliamente desplegado en el mundo desde 1996 (Netcraft, 2024). Es mantenido por la Apache Software Foundation y publicado bajo la licencia Apache 2.0. Su arquitectura modular permite extender sus capacidades mediante módulos cargables dinámicamente (DSO - Dynamic Shared Objects).
 
@@ -261,7 +615,7 @@ En entornos virtualizados, Apache se comporta de manera similar a como lo hace e
 
 ---
 
-## 1.8 PostgreSQL en entornos virtualizados
+## 5.8 PostgreSQL en entornos virtualizados
 
 PostgreSQL es un sistema de gestión de bases de datos objeto-relacional (ORDBMS) de código abierto, reconocido por su robustez, extensibilidad y cumplimiento de los estándares ACID (Atomicidad, Consistencia, Aislamiento, Durabilidad) (PostgreSQL Global Development Group, 2024).
 
@@ -277,7 +631,7 @@ PostgreSQL expone dos archivos de configuración relevantes para el acceso remot
 
 ---
 
-## 1.9 Implicaciones de seguridad según el tipo de hipervisor
+## 5.9 Implicaciones de seguridad según el tipo de hipervisor
 
 El tipo de hipervisor tiene implicaciones directas sobre la seguridad de la infraestructura virtualizada, un aspecto que debe considerarse en la selección de plataforma para la empresa ACME.
 
@@ -289,13 +643,13 @@ El tipo de hipervisor tiene implicaciones directas sobre la seguridad de la infr
 
 ---
 
-# 2. Análisis y síntesis
+# 6. Análisis y síntesis
 
 Esta sección documenta el proceso de análisis colectivo mediante el cual el equipo, apoyándose en el marco teórico construido en la investigación, examinó las razones detrás de cada herramienta y tomó las decisiones técnicas que orientarán la ejecución del proyecto. No se trata de analizar resultados obtenidos —eso corresponde a la sección 9— sino de explicar cómo la teoría informa las decisiones de diseño e implementación que se llevarán a cabo.
 
 ---
 
-## 2.1 Proxmox VE y VirtualBox como representantes de cada arquitectura
+## 6.1 Proxmox VE y VirtualBox como representantes de cada arquitectura
 
 El proyecto plantea desde el principio que la arquitectura debe incluir al menos un hipervisor de Tipo 1 y uno de Tipo 2. Esta exigencia no es arbitraria: la pregunta guía del nivel conceptual requiere comparar ambas arquitecturas con evidencia práctica, lo cual solo será posible si las dos están presentes y operando simultáneamente en la misma infraestructura. Sin esa dualidad, la comparación quedaría en el plano puramente teórico.
 
@@ -307,7 +661,7 @@ En cuanto a los sistemas operativos de las máquinas virtuales, el equipo optó 
 
 ---
 
-## 2.2 La elección de Apache y PostgreSQL como servicios del entorno
+## 6.2 La elección de Apache y PostgreSQL como servicios del entorno
 
 El proyecto establece que la infraestructura de ACME requiere un servidor web y un servidor de base de datos. A partir de esa definición, el equipo analizó qué software concreto utilizar en cada rol.
 
@@ -317,7 +671,7 @@ Para el servidor de base de datos, PostgreSQL se seleccionó por dos razones com
 
 ---
 
-## 2.3 La definición del modo de red como decisión del equipo
+## 6.3 La definición del modo de red como decisión del equipo
 
 El proyecto exige que las tres VMs, gestionadas por dos hipervisores distintos en dos equipos físicos diferentes, se comuniquen entre sí. La configuración de red no estaba prescrita: el equipo debía analizarla y resolverla. Esta fue la decisión técnica más analítica del proceso de diseño.
 
@@ -327,7 +681,7 @@ El modo Adaptador Puente (Bridge) es la única opción que resuelve todos los re
 
 ---
 
-## 2.4 El diseño del benchmark como solución a una limitación del entorno
+## 6.4 El diseño del benchmark como solución a una limitación del entorno
 
 El proyecto requiere medir y comparar el rendimiento de ambos hipervisores bajo condiciones de carga equivalentes. El principio fundamental del benchmarking comparativo es la equivalencia de condiciones: las VMs evaluadas deben tener las mismas configuraciones de vCPU, RAM, sistema operativo y versiones de software para que la comparación sea válida. Sin embargo, el equipo identificó una limitación estructural que no es posible eliminar: los dos equipos físicos disponibles tienen hardware profundamente diferente, con una brecha de nueve generaciones entre sus procesadores (Intel i5-3470 de 2013 en el equipo Proxmox vs. Intel i5-12450H de 2022 en el equipo VirtualBox) y una diferencia de almacenamiento tan significativa como la que existe entre un HDD mecánico y un SSD NVMe.
 
@@ -337,13 +691,13 @@ Para la ejecución del benchmark se desarrollarán dos scripts Python que correr
 
 ---
 
-# 3. Respuesta a las preguntas iniciales
+# 7. Respuesta a las preguntas iniciales
 
 ---
 
-## 3.1. Nivel Conceptual
+## 7.1. Nivel Conceptual
 
-### 3.1.1. Diferencias fundamentales entre hipervisores de Tipo 1 y Tipo 2
+### 7.1.1. Diferencias fundamentales entre hipervisores de Tipo 1 y Tipo 2
 
 Un hipervisor de Tipo 1 (bare-metal) como Proxmox VE se instala directamente sobre el hardware del servidor, sin sistema operativo intermedio lo cual le permite acceder directamente a los recursos físicos (CPU, RAM, disco), reduciendo la sobrecarga que conlleva la virtualización. Por su parte, un hipervisor de Tipo 2 como Oracle VirtualBox se ejecuta sobre un sistema operativo anfitrión (en el proyecto se usó Pop!_OS 24.04 LTS), lo que introduce una capa adicional de abstracción entre la VM y el hardware.
 
@@ -351,19 +705,19 @@ En términos de rendimiento, bajo hardware idéntico el Tipo 1 debería tener un
 
 Por lo que se logró comprender que la elección del hipervisor no es una decisión única para toda la infraestructura, sino que puede variar según el rol de cada servidor dentro del proyecto.
 
-### 3.1.2. Impacto en seguridad y aislamiento
+### 7.1.2. Impacto en seguridad y aislamiento
 
 Se logró evidencia que el hipervisor Tipo 1 es más seguro en términos de aislamiento, esto debido a que en VirtualBox, el SO anfitrión (Pop!_OS) actúa como intermediario entre las VMs y el hardware, por lo que si ese SO es comprometido, todas las VMs quedan expuestas, mientrar que en Proxmox no existe ese intermediario, el hipervisor corre directamente sobre el hardware, por lo que un atacante que logre comprometer una VM se encontrará de frente con el hipervisor bare-metal, sin poder escalar al SO anfitrión debido a que no existe. A esto se suma que Proxmox permite configurar reglas de firewall individuales por VM desde su interfaz web, como se hizo con el bridge vmbr0 en el proyecto, añadiendo una capa de control de red adicional.
 
 Lo anterior nos guía al hecho de que la mejor decisión es asignar los servidores de producción al hipervisor Tipo 1, donde el aislamiento es más robusto y la superficie de ataque es menor.
 
-### 3.1.3. Implicaciones en la gestión y administración
+### 7.1.3. Implicaciones en la gestión y administración
 
 Proxmox ofrece una interfaz web centralizada (`https://IP:8006`) la cual permite gestionar todas las VMs, monitorear recursos en tiempo real, crear snapshots, clonar VMs y gestionar almacenamiento desde un único panel, por su parte VirtualBox, al ser Tipo 2, depende del escritorio del SO anfitrión y su gestión es más manual e interactiva. En producción empresarial, Proxmox escala mejor al no requerir un SO base subyacente y al centralizar la administración de toda la infraestructura virtualizada.
 
 Esta diferencia en la capacidad de gestión fue determinante para entender por qué Proxmox resulta más adecuado en escenarios donde se administran múltiples servidores simultáneamente desde un único punto de control.
 
-### 3.1.4. Proxmox VE como plataforma Tipo 1: componentes principales
+### 7.1.4. Proxmox VE como plataforma Tipo 1: componentes principales
 
 Proxmox VE está basado en Debian GNU/Linux e integra dos tecnologías de virtualización las cuales son KVM (Kernel-based Virtual Machine) para virtualización completa de hardware, y LXC (Linux Containers) para contenedores ligeros. En el proyecto, el componente de red fundamental fue el bridge vmbr0, a través del cual la VM "ServidorWEB" obtuvo conectividad con la red `192.168.137.0/24`, adicionalmente, la interfaz web de administración, accesible por el puerto 8006, permitió crear, configurar y monitorear la VM sin necesidad de interactuar directamente con la consola del servidor.
 
@@ -371,13 +725,13 @@ Comprender estos componentes fue fundamental para configurar correctamente la co
 
 ---
 
-## 3.2. Nivel Técnico
+## 7.2. Nivel Técnico
 
-### 3.2.1. Instalación y configuración inicial de Proxmox y VirtualBox
+### 7.2.1. Instalación y configuración inicial de Proxmox y VirtualBox
 
 Para Proxmox se preparó una memoria USB booteable con la ISO de Proxmox VE 9.1, se configuró el BIOS del equipo HP para arrancar desde USB y se realizó la instalación gráfica definiendo hostname (`proxmox.local`), dirección IP, gateway y DNS. Al finalizar, el bridge `vmbr0` con IP estática quedó configurado en `/etc/network/interfaces`. Para VirtualBox, al tratarse de un hipervisor Tipo 2, simplemente se instaló como aplicación sobre Pop!_OS 24.04 LTS y las VMs se crearon desde su interfaz gráfica sin requerir arranque especial del equipo.
 
-### 3.2.2. Modos de red: NAT, Bridge, Host-Only e Internal
+### 7.2.2. Modos de red: NAT, Bridge, Host-Only e Internal
 
 En la práctica del proyecto se utilizó principalmente el modo Adaptador Puente (Bridge), tanto en Proxmox como en VirtualBox. Este modo asigna a la VM una IP en la misma subred que el equipo anfitrión, permitiendo comunicación directa con otros equipos de la red física. La MV Fedora Workstation utilizó dos adaptadores simultáneamente, los cuales fueron adaptador Puente para acceder a la red interna `192.168.137.x` y NAT para acceder a Internet. El modo Bridge fue la clave para que las tres VMs gestionadas por dos hipervisores distintos se comunicaran fluidamente en la red `192.168.137.0/24`.
 
@@ -388,7 +742,7 @@ En la práctica del proyecto se utilizó principalmente el modo Adaptador Puente
 | **Host-Only** | Solo con el host | No | No | No utilizado |
 | **Internal** | Solo entre VMs | No | No | No utilizado |
 
-### 3.2.3. Instalación y configuración de Apache
+### 7.2.3. Instalación y configuración de Apache
 
 Se instaló el servidor web Apache en la MV de Proxmox mediante:
 
@@ -399,11 +753,11 @@ sudo systemctl status apache2
 
 Apache quedó escuchando en el puerto 80. Se verificó el acceso remoto desde Fedora Workstation navegando a `http://192.168.137.7`, donde se mostró correctamente la página por defecto de Apache2 Ubuntu, confirmando la conectividad entre hipervisores distintos.
 
-### 3.2.4. Interconexión de VMs gestionadas por distintos hipervisores
+### 7.2.4. Interconexión de VMs gestionadas por distintos hipervisores
 
 La clave para lograr la comunicación entre la VM de Proxmox y la VM de VirtualBox fue que ambas se conectaron a la misma red física mediante el modo Adaptador Puente. La VM de Proxmox usó la interfaz `vmbr0` en modo bridge sobre la interfaz física del servidor, y la VM de VirtualBox también usó su interfaz en modo bridge sobre la tarjeta Ethernet del equipo anfitrión. Al estar en la misma subred `192.168.137.0/24`, la comunicación bidireccional funcionó de forma transparente, independientemente del tipo de hipervisor, por medio de esto se demuestra el hecho de que la interoperabilidad entre hipervisores distintos no requiere configuraciones especiales cuando se emplea Bridge networking sobre una red física común.
 
-### 3.2.5. Instalación y configuración de PostgreSQL
+### 7.2.5. Instalación y configuración de PostgreSQL
 
 Se instaló PostgreSQL en ambas VMs con el mismo procedimiento:
 
@@ -419,7 +773,7 @@ Para habilitar el acceso remoto se modificaron dos archivos de configuración:
 
 Finalmente se reinició el servicio con `sudo systemctl restart postgresql`. Se crearon bases de datos y usuarios específicos los cuales fueron `testing/nico` en la VM de Proxmox y `electiva/luis` en la VM de VirtualBox.
 
-### 3.2.6. Direccionamiento IP y configuración de interfaces de red
+### 7.2.6. Direccionamiento IP y configuración de interfaces de red
 
 La red implementada fue `192.168.137.0/24`. Para la VM de VirtualBox, Ubuntu Server utiliza DHCP por defecto, por lo que se debió configurar IP estática mediante Netplan editando `/etc/netplan/00-installer-config.yaml` el cual quedó de la siguiente forma:
 
@@ -441,15 +795,15 @@ network:
 
 Los cambios se aplicaron con `sudo netplan apply` y se verificaron con `ip a`. En Proxmox, la IP estática de la VM quedó configurada directamente durante la instalación de Ubuntu Server mediante el instalador Subiquity.
 
-### 3.2.7. Pruebas de conectividad entre VMs
+### 7.2.7. Pruebas de conectividad entre VMs
 
 Se verificó conectividad a nivel de aplicación a través de dos formas, primero verificando el acceso HTTP a Apache desde Fedora Workstation navegando a `http://192.168.137.7`, y conexión a PostgreSQL con DBeaver desde Fedora hacia ambos servidores (`192.168.137.6:5432` y `192.168.137.7:5432`).
 
 ---
 
-## 3.3. Nivel Comparativo
+## 7.3. Nivel Comparativo
 
-### 3.3.1. Metodología aplicada para los benchmarks
+### 7.3.1. Metodología aplicada para los benchmarks
 
 Se desarrollaron dos scripts Python ejecutados desde la MV Fedora Workstation como cliente externo, midiendo el rendimiento bajo condiciones equivalentes: misma versión de SO (Ubuntu Server 24.04.4 LTS), misma cantidad de CPU virtual (2 cores), misma RAM (6 GB) y los mismos servicios instalados (Apache y PostgreSQL).
 
@@ -457,7 +811,7 @@ Los scripts fueron:
 - **`benchmark_apache.py`** el cual genera 2,000 peticiones HTTP con 50 hilos concurrentes hacia cada servidor.
 - **`benchmark_postgresql.py`** en el que se realizan pruebas intensivas de I/O (INSERT masivo, lecturas, índices) y CPU (sort, agregaciones, joins, operaciones matemáticas) con 300,000 y 500,000 filas respectivamente.
 
-### 3.3.2. Resultados del benchmark de Apache
+### 7.3.2. Resultados del benchmark de Apache
 
 | Métrica | Proxmox (Tipo 1) | VirtualBox (Tipo 2) | Diferencia |
 |---|---|---|---|
@@ -468,7 +822,7 @@ Los scripts fueron:
 | **Errores** | 0 | 0 | Ambos: 100% confiabilidad |
 
 Las diferencias en Apache fueron mínimas (~4.5%), lo que indica que para cargas web ligeras ambos hipervisores son equivalentes.
-### 3.3.3. Resultados del benchmark de PostgreSQL
+### 7.3.3. Resultados del benchmark de PostgreSQL
 
 | Métrica | Proxmox (Tipo 1) | VirtualBox (Tipo 2) | Diferencia de tiempo (s) |
 |---|---|---|---|
@@ -481,7 +835,7 @@ Las diferencias en Apache fueron mínimas (~4.5%), lo que indica que para cargas
 | **CPU — Join avg (s)** | 0.2965 | 0.1954 | Proxmox +51.7% |
 | **CPU — Math avg (s)** | 6.4578 | 3.9814 | Proxmox +62.2% |
 
-### 3.3.4. Interpretación de los resultados
+### 7.3.4. Interpretación de los resultados
 
 Los resultados no invalidan la superioridad teórica del Tipo 1, puesto que la diferencia se explica por el hardware en el que se ejecuta cada hipervisor:
 
@@ -498,9 +852,9 @@ Esta distinción tiene implicaciones directas sobre cómo debe planificarse una 
 
 ---
 
-## 3.4. Nivel Estratégico
+## 7.4. Nivel Estratégico
 
-### 3.4.1. Criterios de selección del hipervisor según tipo de servidor
+### 7.4.1. Criterios de selección del hipervisor según tipo de servidor
 
 La selección del hipervisor adecuado depende del rol que cumple cada servidor dentro de la infraestructura, considerando factores técnicos, operativos y económicos. A partir de lo observado durante el proyecto, se plantean las siguientes recomendaciones:
 
@@ -510,20 +864,20 @@ La selección del hipervisor adecuado depende del rol que cumple cada servidor d
 | **Servidor BD (producción)** | Proxmox (Tipo 1) | En hardware moderno con SSD, el acceso directo al hardware reduce latencia de I/O |
 | **Servidor de Desarrollo** | VirtualBox (Tipo 2) | Facilidad de uso, snapshots rápidos, portabilidad entre equipos de desarrolladores |
 
-### 3.4.2. Costos de mantenimiento y soporte
+### 7.4.2. Costos de mantenimiento y soporte
 
 La optimización de costos es uno de los argumentos centrales para justificar una migración hacia entornos virtualizados. Proxmox VE es open-source con suscripción empresarial opcional; sin suscripción funciona completamente pero recibe actualizaciones desde el repositorio pve-no-subscription. Al no requerir licenciamiento por servidor virtualizado, permite consolidar múltiples servidores físicos en un único equipo sin incrementar los costos de software, reduciendo además los gastos asociados a energía, espacio físico y mantenimiento de hardware, sin embargo, el costo principal asociado es el hardware dedicado bare-metal y la curva de aprendizaje inicial para la administración del sistema. VirtualBox, por su parte, es gratuito para uso personal y evaluación, pero en entornos productivos deben considerarse varios costos adicionales: el SO anfitrión (licencias Windows si aplica), el Extension Pack el cual bajo su licencia PUEL requiere licencia comercial de Oracle para uso empresarial.
 
 
-### 3.4.3. Recomendación estratégica para ACME
+### 7.4.3. Recomendación estratégica para ACME
 
 Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmox VE sobre hardware moderno con almacenamiento SSD, garantizando la eliminación de la capa del SO anfitrión, gestión centralizada de la infraestructura y mejor relación rendimiento/costo a largo plazo. VirtualBox queda apropiado para el entorno de desarrollo, donde la portabilidad, la facilidad de administración por parte de los desarrolladores y la flexibilidad de los snapshots son más valiosas que el rendimiento máximo.
 
 ---
 
-## 3.5. Nivel Reflexivo
+## 7.5. Nivel Reflexivo
 
-### 3.5.1. Retos técnicos y de compatibilidad encontrados
+### 7.5.1. Retos técnicos y de compatibilidad encontrados
 
 | Reto encontrado | Causa identificada | Solución aplicada |
 |---|---|---|
@@ -531,7 +885,7 @@ Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmo
 | Nombre de interfaz de red variable (`enp0s3`) | El nombre de la interfaz depende del entorno (VirtualBox vs bare-metal) | Verificación con `ip a` antes de editar Netplan |
 | PostgreSQL no acepta conexiones remotas por defecto | Configuración restrictiva de `listen_addresses` y `pg_hba.conf` | Modificación de `listen_addresses = '*'` y adición de regla de subred en `pg_hba.conf` |
 
-### 3.5.2. Lecciones aprendidas
+### 7.5.2. Lecciones aprendidas
 
 - La interoperabilidad entre hipervisores de distinto tipo es posible sin configuraciones complejas, siempre que ambas VMs compartan la misma red física a través de Bridge networking. El tipo de hipervisor no es una barrera para la comunicación entre máquinas virtuales.
 
@@ -543,7 +897,7 @@ Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmo
 
 - La diferencia entre HDD y SSD tiene mayor impacto en el rendimiento de bases de datos que cualquier otra variable del sistema. En operaciones de escritura masiva, la brecha puede superar el 280%, lo que refuerza que la selección del hipervisor y la modernización del hardware son decisiones que deben tomarse de forma conjunta, no independiente.
 
-## 3.6. Respuesta a la pregunta inicial
+## 7.6. Respuesta a la pregunta inicial
 
 ¿Cómo puede la empresa ACME migrar su infraestructura basada en servidores físicos hacia un entorno virtualizado para optimizar costos y disponibilidad, considerando la selección del hipervisor, las herramientas de gestión de VMs y la conectividad de red interna?
 
@@ -555,7 +909,7 @@ En cuanto a la conectividad de red interna, la interconexión entre los servidor
 
 Por lo que la migración de ACME es técnicamente viable, económicamente justificable con Proxmox como plataforma principal, y operativamente segura si se planifica en fases que combinen la modernización del hardware con la virtualización progresiva de los servidores, comenzando por los de producción en Proxmox y manteniendo el entorno de desarrollo en VirtualBox.
 
-# 4. Conclusiones
+# 8. Conclusiones
 
 La diferencia entre un hipervisor Tipo 1 y uno Tipo 2 va más allá de una capa de software adicional: implica modelos de seguridad y administración distintos. Proxmox elimina el SO anfitrión como vector de ataque y centraliza la gestión en una interfaz web, mientras que VirtualBox gana en portabilidad y accesibilidad a costa de heredar las vulnerabilidades del sistema sobre el que corre. Ninguna arquitectura es universalmente superior; la elección adecuada depende del rol del servidor y los requisitos del entorno.
 
@@ -604,3 +958,10 @@ Smith, J. E., & Nair, R. (2005). The architecture of virtual machines. *IEEE Com
 Tanenbaum, A. S., & Bos, H. (2015). *Modern operating systems* (4th ed.). Pearson Education.
 
 Tanenbaum, A. S., & Wetherall, D. J. (2011). *Computer networks* (5th ed.). Pearson Education.
+
+# APÉNDICES
+
+**Apendice A:** Tablero de Trello para la gestión de las tareas
+
+Para mayor detalle, diríjase al siguiente enlace:
+[Trello](https://trello.com/invite/b/69a457c5e0e8e39b4aa9528c/ATTI2919c9d35d28e5ea091452cf4c5a2c75FF77DECD/proyecto-electiva-1)
