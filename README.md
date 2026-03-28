@@ -20,7 +20,7 @@ Ambos archivos están en Markdown; pueden visualizarse en GitHub, en el editor o
 
 ## Material relacionado (opcional)
 
-- **`code/`** — Scripts de pruebas: `benchmak_apache.py` y `benchmark_postgresql.py`.
+- **`code/`** — Scripts de pruebas: `benchmark_apache.py` y `benchmark_postgresql.py`.
 - **`files/`** — Resultados en CSV de las ejecuciones de benchmark.
 - **`images/`** — Capturas referenciadas desde `informe-tecnico.md`.
 

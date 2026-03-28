@@ -4,20 +4,19 @@
 
 ### Informe Técnico RED DE 3 MÁQUINAS VIRTUALES
 
-Gabriel Fernando Castillo Mendieta
-Esteban Nicolás Peña Coronado
-Luis Javier López Galindo
-Johan Sebastián Gil Salamanca
+Gabriel Fernando Castillo Mendieta  
+Esteban Nicolás Peña Coronado  
+Luis Javier López Galindo  
+Johan Sebastián Gil Salamanca  
 Brayan Alejandro Cifuentes Quiroga
 
-
-**Docente:** Frey Alfonso Santamaría Buitrago
+**Docente:** Frey Alfonso Santamaría Buitrago  
 Ingeniero de Sistemas
 
-**Universidad Pedagógica y Tecnológica de Colombia**<br>
-Ingeniería de Sistemas y Computación<br>
-Electiva IaaS y Virtualización<br>
-Tunja<br>
+**Universidad Pedagógica y Tecnológica de Colombia**  
+Ingeniería de Sistemas y Computación  
+Electiva IaaS y Virtualización  
+Tunja  
 2026
 
 </div>
@@ -124,15 +123,16 @@ Tunja<br>
 
 | N.° | Descripción | Sección |
 |-----|-------------|---------|
-| Tabla 1 | Características de los equipos anfitriones | 4 |
-| Tabla 2 | Configuración de las máquinas virtuales | 6.8 |
-| Tabla 3 | Direcciones IP de los equipos y máquinas virtuales en la red interna | 3 |
-| Tabla 4 | Credenciales de acceso a las máquinas virtuales | 3 |
-| Tabla 5 | Credenciales de acceso a las bases de datos PostgreSQL | 3 |
+| Tabla 1 | Direcciones IP de los equipos y máquinas virtuales en la red interna | 3 |
+| Tabla 2 | Credenciales de acceso a las máquinas virtuales | 3 |
+| Tabla 3 | Credenciales de acceso a las bases de datos PostgreSQL | 3 |
+| Tabla 4 | Características de los equipos anfitriones | 4 |
+| Tabla 5 | Configuración de las máquinas virtuales | 6.8 |
 | Tabla 6 | Resultados del benchmark de Apache | 11.3 |
 | Tabla 7 | Resultados del benchmark de PostgreSQL | 11.4 |
 | Tabla 8 | Comparativa final de PostgreSQL entre hipervisores | 11.5 |
 | Tabla 9 | Comparativa final de Apache entre hipervisores | 11.6 |
+| Tabla 10 | Aspectos del hardware anfitrión relevantes para la interpretación de los benchmarks | 12 |
 
 ---
 
@@ -165,7 +165,7 @@ Las máquinas virtuales están configuradas para comunicarse entre sí a través
 
 La arquitectura implementada consiste en tres máquinas virtuales que se comunican a través de una red interna con el segmento `192.168.137.0/24`:
 
-**Tabla 3.** Direcciones IP de los equipos y máquinas virtuales en la red interna.
+**Tabla 1.** Direcciones IP de los equipos y máquinas virtuales en la red interna.
 
 | Equipo / Máquina Virtual | Hipervisor | Sistema Operativo | IP | Servicios |
 |--------------------------|------------|-------------------|-----|-----------|
@@ -176,7 +176,7 @@ La arquitectura implementada consiste en tres máquinas virtuales que se comunic
 | Equipo Luis Javier (host) | VirtualBox | — | 192.168.137.4 / 192.168.137.5 | Host de MV Workstation |
 | Fedora Workstation (MV Luis Javier) | VirtualBox (Tipo 2) | Fedora Workstation | 192.168.137.8 | Cliente (DBeaver, navegador) |
 
-**Tabla 4.** Credenciales de acceso a las máquinas virtuales.
+**Tabla 2.** Credenciales de acceso a las máquinas virtuales.
 
 | Equipo | Usuario | Contraseña |
 |--------|---------|------------|
@@ -185,7 +185,7 @@ La arquitectura implementada consiste en tres máquinas virtuales que se comunic
 | MV Gabriel (Ubuntu Server en VirtualBox) | `vboxuser` | `12345678` |
 | MV Luis Javier Workstation (Fedora) | `nico` | `12345678` |
 
-**Tabla 5.** Credenciales de acceso a las bases de datos PostgreSQL.
+**Tabla 3.** Credenciales de acceso a las bases de datos PostgreSQL.
 
 | Base de datos | Usuario | Contraseña | Host (IP) | Puerto |
 |---------------|---------|------------|-----------|--------|
@@ -198,7 +198,7 @@ La arquitectura implementada consiste en tres máquinas virtuales que se comunic
 
 Para la implementación del proyecto se utilizaron dos equipos físicos con características diferentes. Es importante destacar esta diferencia ya que influye directamente en los resultados de rendimiento obtenidos.
 
-**Tabla 1.** Características de los equipos anfitriones.
+**Tabla 4.** Características de los equipos anfitriones.
 
 | Característica | Equipo Proxmox (Tipo 1) | Equipo VirtualBox (Tipo 2) |
 |----------------|--------------------------|---------------------------|
@@ -437,7 +437,7 @@ Antes de finalizar la creación de la máquina virtual, Proxmox presentó un res
 
 </div>
 
-**Tabla 2.** Configuración de las máquinas virtuales.
+**Tabla 5.** Configuración de las máquinas virtuales.
 
 | Parámetro | Valor (Proxmox) | Valor (VirtualBox) |
 |-----------|-----------------|-------------------|
@@ -833,7 +833,7 @@ Finalmente, se verificó que ambas conexiones a las bases de datos estuvieran ac
 
 Para evaluar el rendimiento comparativo entre el hipervisor de Tipo 1 (Proxmox) y el hipervisor de Tipo 2 (VirtualBox), se desarrollaron y ejecutaron dos scripts de benchmark en Python:
 
-1. **`benchmak_apache.py`** — Benchmark de servidor web (Apache).
+1. **`benchmark_apache.py`** — Benchmark de servidor web (Apache).
 2. **`benchmark_postgresql.py`** — Benchmark de base de datos (PostgreSQL).
 
 ### 11.1. Benchmark de Apache (Servidor Web)
@@ -992,6 +992,8 @@ Las máquinas virtuales en ambos hipervisores fueron configuradas con **condicio
 - Mismos servicios instalados: Apache y PostgreSQL
 
 La gran diferencia radica en el hardware subyacente:
+
+**Tabla 10.** Aspectos del hardware anfitrión relevantes para la interpretación de los benchmarks.
 
 | Aspecto | Equipo Proxmox (Tipo 1) | Equipo VirtualBox (Tipo 2) |
 |---------|--------------------------|---------------------------|

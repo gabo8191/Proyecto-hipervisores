@@ -40,7 +40,7 @@ Tunja
     - [3.2.2. Nivel Técnico](#322-nivel-técnico)
     - [3.2.3. Nivel Comparativo](#323-nivel-comparativo)
     - [3.2.4. Nivel Estratégico](#324-nivel-estratégico)
-    - [3.2.5. NIvel Reflexivo](#325-nivel-reflexivo)
+    - [3.2.5. Nivel Reflexivo](#325-nivel-reflexivo)
   - [3.3. ¿Qué habilidades blandas se van a desarrollar?](#33-qué-habilidades-blandas-se-van-a-desarrollar)
     - [3.3.1. Trabajo en equipo y colaboración](#331-trabajo-en-equipo-y-colaboración)
     - [3.3.1.1. Estrategia a aplicar](#3311-estrategia-a-aplicar)
@@ -114,6 +114,18 @@ Tunja
 [Tabla 2. Asignación de roles y responsabilidades del equipo de trabajo](#tabla-2)
 
 [Tabla 3. Comparación entre hipervisores tipo 1 y tipo 2](#tabla-3)
+
+[Tabla 4. Resumen de modos de red y su uso en el proyecto](#tabla-4)
+
+[Tabla 5. Resultados del benchmark de Apache](#tabla-5)
+
+[Tabla 6. Resultados del benchmark de PostgreSQL](#tabla-6)
+
+[Tabla 7. Comparación del hardware anfitrión por equipo](#tabla-7)
+
+[Tabla 8. Recomendación de hipervisor según tipo de servidor](#tabla-8)
+
+[Tabla 9. Retos técnicos, causas identificadas y soluciones aplicadas](#tabla-9)
 
 **LISTA DE FIGURAS**
 
@@ -268,8 +280,8 @@ muestra a continuación:
 
 | Participante | Rol | Responsabilidades |
 |-------------|-----|-------------------|
-| Esteban Nicolas Peña Coronado | Arquitecto de infraestructura | Diseña la arquitectura de virtualización para los tres servidores críticos de ACME. Define los criterios de dimensionamiento de recursos (vCPU, RAM, disco) para cada máquina virtual, selecciona los hipervisores apropiados según el tipo de carga y documenta todas las decisiones técnicas de diseño. Coordina las pruebas comparativas de rendimiento y elabora las recomendaciones estratégicas con base en los resultados obtenidos. |
-| Luis Javier Lopez Galindo | Gerente de Proyecto | Planifica y coordina las actividades del equipo garantizando el cumplimiento de los plazos establecidos en el diagrama de Gantt. Distribuye las tareas, gestiona los riesgos del proyecto, facilita la comunicación interna entre los miembros y actúa como enlace con el departamento de TI de ACME. Valida que las decisiones técnicas estén debidamente fundamentadas y lidera la presentación de los resultados finales. |
+| Esteban Nicolás Peña Coronado | Arquitecto de infraestructura | Diseña la arquitectura de virtualización para los tres servidores críticos de ACME. Define los criterios de dimensionamiento de recursos (vCPU, RAM, disco) para cada máquina virtual, selecciona los hipervisores apropiados según el tipo de carga y documenta todas las decisiones técnicas de diseño. Coordina las pruebas comparativas de rendimiento y elabora las recomendaciones estratégicas con base en los resultados obtenidos. |
+| Luis Javier López Galindo | Gerente de Proyecto | Planifica y coordina las actividades del equipo garantizando el cumplimiento de los plazos establecidos en el diagrama de Gantt. Distribuye las tareas, gestiona los riesgos del proyecto, facilita la comunicación interna entre los miembros y actúa como enlace con el departamento de TI de ACME. Valida que las decisiones técnicas estén debidamente fundamentadas y lidera la presentación de los resultados finales. |
 | Gabriel Fernando Castillo Mendieta | Ingeniero de Redes | Configura e implementa la red interna virtual que interconecta las tres máquinas virtuales, independientemente del hipervisor que las gestione. Define el esquema de direccionamiento IP, selecciona los modos de red adecuados (NAT, Bridge, Host-Only, Internal) en cada plataforma y garantiza la conectividad estable entre los servidores. Realiza pruebas de conectividad con herramientas como ping, traceroute y netstat, y documenta los problemas encontrados junto con sus soluciones. |
 | Johan Sebastián Gil Salamanca | Administrador de Sistemas | Instala y configura las plataformas de virtualización asignadas (Proxmox/KVM y VirtualBox), asegurando que un hipervisor de Tipo 1 y uno de Tipo 2 estén presentes en la arquitectura. Provisiona las máquinas virtuales con los sistemas operativos requeridos, gestiona snapshots y clonación de VMs, y resuelve problemas de compatibilidad entre plataformas. Documenta el proceso completo de instalación y configuración de cada entorno. |
 | Brayan Alejandro Cifuentes Quiroga | Ingeniero de pruebas | Diseña y ejecuta las pruebas de rendimiento sobre las tres máquinas virtuales bajo condiciones de carga equivalentes. Mide y registra métricas de uso de CPU, memoria RAM y velocidad de disco utilizando herramientas como htop, sysbench y fio. Analiza los resultados obtenidos, elabora comparativas entre hipervisores Tipo 1 y Tipo 2, y consolida los hallazgos en el informe final del proyecto. Realiza pruebas de conectividad y rendimiento, y registra los retos encontrados con sus soluciones. |
@@ -364,7 +376,7 @@ independientemente del tipo de hipervisor que las gestione.
 - Formular recomendaciones estratégicas sustentadas en evidencias
   prácticas y alineadas con las necesidades operativas del negocio.
 
-### 3.2.5. NIvel Reflexivo
+### 3.2.5. Nivel Reflexivo
 
 - Identificar y documentar los retos técnicos y de compatibilidad
   encontrados durante el montaje e integración del entorno virtualizado.
@@ -380,11 +392,11 @@ independientemente del tipo de hipervisor que las gestione.
 
 ### 3.3.1. Trabajo en equipo y colaboración
 
-El desarrollo de este proyecto exige que los cinco integrantes actúenen cohesión, dado que cada decisión técnica, desde la selección del
+El desarrollo de este proyecto exige que los cinco integrantes actúen en cohesión, dado que cada decisión técnica, desde la selección del
 hipervisor hasta la configuración de la red interna, afecta
 directamente el trabajo de los demás roles. La interdependencia entre
 el Arquitecto de Infraestructura, el Ingeniero de Redes, el
-Administrador de Sistemas, el Ingeniero de Calidad y el Gerente de
+Administrador de Sistemas, el Ingeniero de Pruebas y el Gerente de
 Proyecto obliga a que la comunicación sea constante, clara y orientada
 a resultados. En este sentido, el proyecto representa un escenario
 real de colaboración técnica donde el éxito colectivo depende de la
@@ -469,10 +481,10 @@ Ejemplos representativos incluyen VMware ESXi, Microsoft Hyper-V (en su modalida
 
 <div align="center">
 
-![Especificaciones del equipo Proxmox](images/fig-037.png)
+![Arquitectura básica de hipervisor Tipo 1 (bare-metal)](images/fig-037.png)
 
 <a id="figura-2"></a>
-**Figura 2.** Arquitectura basica Hipervisor Tipo 1.
+**Figura 2.** Arquitectura básica Hipervisor Tipo 1.
 
 </div>
 Las ventajas principales de este modelo son su menor latencia en el acceso al hardware (al eliminar la capa del SO anfitrión), su mayor eficiencia en la gestión de recursos y su superficie de ataque reducida desde el punto de vista de la seguridad (Laureano & Maziero, 2008).
@@ -485,18 +497,20 @@ Ejemplos representativos incluyen **Oracle VirtualBox**, VMware Workstation/Fusi
 
 <div align="center">
 
-![Especificaciones del equipo Proxmox](images/fig-038.png)
+![Arquitectura básica de hipervisor Tipo 2 (hosted)](images/fig-038.png)
 
 <a id="figura-3"></a>
-**Figura 3.** Arquitectura basica Hipervisor Tipo 2.
+**Figura 3.** Arquitectura básica Hipervisor Tipo 2.
 
 </div>
 
 La principal desventaja es la capa adicional introducida por el sistema operativo anfitrión, que genera un *overhead* de rendimiento. No obstante, los hipervisores Tipo 2 son más fáciles de instalar, configurar y usar en estaciones de trabajo de desarrollo, lo que los hace idóneos para entornos de laboratorio, pruebas y desarrollo (Portnoy, 2012).
 
 ### 5.2.3 Comparación de arquitecturas
+
 <a id="tabla-3"></a>
-**Tabla 3.** Comparacion entre hipervisores tipo 1 y tipo 2.
+**Tabla 3.** Comparación entre hipervisores tipo 1 y tipo 2.
+
 | Aspecto | Tipo 1 (Proxmox VE) | Tipo 2 (VirtualBox) |
 |---------|---------------------|---------------------|
 | **Instalación** | Bare-metal, ocupa el disco completo | Sobre SO anfitrión existente |
@@ -707,7 +721,7 @@ Por lo que se logró comprender que la elección del hipervisor no es una decisi
 
 ### 7.1.2. Impacto en seguridad y aislamiento
 
-Se logró evidencia que el hipervisor Tipo 1 es más seguro en términos de aislamiento, esto debido a que en VirtualBox, el SO anfitrión (Pop!_OS) actúa como intermediario entre las VMs y el hardware, por lo que si ese SO es comprometido, todas las VMs quedan expuestas, mientrar que en Proxmox no existe ese intermediario, el hipervisor corre directamente sobre el hardware, por lo que un atacante que logre comprometer una VM se encontrará de frente con el hipervisor bare-metal, sin poder escalar al SO anfitrión debido a que no existe. A esto se suma que Proxmox permite configurar reglas de firewall individuales por VM desde su interfaz web, como se hizo con el bridge vmbr0 en el proyecto, añadiendo una capa de control de red adicional.
+Se logró evidencia que el hipervisor Tipo 1 es más seguro en términos de aislamiento, esto debido a que en VirtualBox, el SO anfitrión (Pop!_OS) actúa como intermediario entre las VMs y el hardware, por lo que si ese SO es comprometido, todas las VMs quedan expuestas, mientras que en Proxmox no existe ese intermediario, el hipervisor corre directamente sobre el hardware, por lo que un atacante que logre comprometer una VM se encontrará de frente con el hipervisor bare-metal, sin poder escalar al SO anfitrión debido a que no existe. A esto se suma que Proxmox permite configurar reglas de firewall individuales por VM desde su interfaz web, como se hizo con el bridge vmbr0 en el proyecto, añadiendo una capa de control de red adicional.
 
 Lo anterior nos guía al hecho de que la mejor decisión es asignar los servidores de producción al hipervisor Tipo 1, donde el aislamiento es más robusto y la superficie de ataque es menor.
 
@@ -734,6 +748,9 @@ Para Proxmox se preparó una memoria USB booteable con la ISO de Proxmox VE 9.1,
 ### 7.2.2. Modos de red: NAT, Bridge, Host-Only e Internal
 
 En la práctica del proyecto se utilizó principalmente el modo Adaptador Puente (Bridge), tanto en Proxmox como en VirtualBox. Este modo asigna a la VM una IP en la misma subred que el equipo anfitrión, permitiendo comunicación directa con otros equipos de la red física. La MV Fedora Workstation utilizó dos adaptadores simultáneamente, los cuales fueron adaptador Puente para acceder a la red interna `192.168.137.x` y NAT para acceder a Internet. El modo Bridge fue la clave para que las tres VMs gestionadas por dos hipervisores distintos se comunicaran fluidamente en la red `192.168.137.0/24`.
+
+<a id="tabla-4"></a>
+**Tabla 4.** Resumen de modos de red y su uso en el proyecto.
 
 | Modo de red | Acceso LAN | Acceso Internet | Acceso desde red externa | Uso en el proyecto |
 |---|---|---|---|---|
@@ -813,6 +830,9 @@ Los scripts fueron:
 
 ### 7.3.2. Resultados del benchmark de Apache
 
+<a id="tabla-5"></a>
+**Tabla 5.** Resultados del benchmark de Apache (RPS y latencias).
+
 | Métrica | Proxmox (Tipo 1) | VirtualBox (Tipo 2) | Diferencia |
 |---|---|---|---|
 | **RPS (Req/s)** | 1,100.88 | 1,150.33 | VirtualBox +4.5% |
@@ -822,7 +842,11 @@ Los scripts fueron:
 | **Errores** | 0 | 0 | Ambos: 100% confiabilidad |
 
 Las diferencias en Apache fueron mínimas (~4.5%), lo que indica que para cargas web ligeras ambos hipervisores son equivalentes.
+
 ### 7.3.3. Resultados del benchmark de PostgreSQL
+
+<a id="tabla-6"></a>
+**Tabla 6.** Resultados del benchmark de PostgreSQL (pruebas de I/O y CPU).
 
 | Métrica | Proxmox (Tipo 1) | VirtualBox (Tipo 2) | Diferencia de tiempo (s) |
 |---|---|---|---|
@@ -838,6 +862,9 @@ Las diferencias en Apache fueron mínimas (~4.5%), lo que indica que para cargas
 ### 7.3.4. Interpretación de los resultados
 
 Los resultados no invalidan la superioridad teórica del Tipo 1, puesto que la diferencia se explica por el hardware en el que se ejecuta cada hipervisor:
+
+<a id="tabla-7"></a>
+**Tabla 7.** Comparación del hardware anfitrión por equipo.
 
 | Aspecto | Equipo Proxmox (Tipo 1) | Equipo VirtualBox (Tipo 2) |
 |---|---|---|
@@ -857,6 +884,9 @@ Esta distinción tiene implicaciones directas sobre cómo debe planificarse una 
 ### 7.4.1. Criterios de selección del hipervisor según tipo de servidor
 
 La selección del hipervisor adecuado depende del rol que cumple cada servidor dentro de la infraestructura, considerando factores técnicos, operativos y económicos. A partir de lo observado durante el proyecto, se plantean las siguientes recomendaciones:
+
+<a id="tabla-8"></a>
+**Tabla 8.** Recomendación de hipervisor según tipo de servidor.
 
 | Servidor | Hipervisor recomendado | Justificación |
 |---|---|---|
@@ -878,6 +908,9 @@ Para los servidores críticos de ACME (web y base de datos) se recomienda Proxmo
 ## 7.5. Nivel Reflexivo
 
 ### 7.5.1. Retos técnicos y de compatibilidad encontrados
+
+<a id="tabla-9"></a>
+**Tabla 9.** Retos técnicos, causas identificadas y soluciones aplicadas.
 
 | Reto encontrado | Causa identificada | Solución aplicada |
 |---|---|---|
@@ -961,7 +994,7 @@ Tanenbaum, A. S., & Wetherall, D. J. (2011). *Computer networks* (5th ed.). Pear
 
 # APÉNDICES
 
-**Apendice A:** Tablero de Trello para la gestión de las tareas
+**Apéndice A:** Tablero de Trello para la gestión de las tareas
 
 Para mayor detalle, diríjase al siguiente enlace:
 [Trello](https://trello.com/invite/b/69a457c5e0e8e39b4aa9528c/ATTI2919c9d35d28e5ea091452cf4c5a2c75FF77DECD/proyecto-electiva-1)
